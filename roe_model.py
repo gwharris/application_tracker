@@ -30,7 +30,7 @@ dash = pd.read_excel(data_file, sheet_name="Dashboard")
 
 # Example custom colors for each status
 status_order = dash["Status"].dropna()
-custom_colors = ["#e9dddd", "#db9abc", "#d24d7c", "#59474D", "#f59281", "#4db7cf", "#0d9937"]
+custom_colors = ["#d8c0c0", "#db9abc", "#d24d7c", "#59474D", "#f59281", "#4db7cf", "#0d9937"]
 
 # Calculate response rate
 total_apps = dash["# In Status"].sum()
@@ -53,12 +53,12 @@ def convert_to_st(df: pd.DataFrame, x: str, y: str):
     return new_df
 
 # -------------------- HEADER --------------------
-st.title("Job Applications - Data Analysis")
+st.title("Job Application - Data Visualization")
 
 # Layer 1 Columns
 st.header("Graham Harris")
 st.text("Since being laid off in April 2025, I've been hard at work applying to new roles. This project is a culmination of all of the data I've collected, to showcase my data visualization skills.")
-st.text("Data is accurate as of last GitHub push.")
+st.text("Example data is loaded on the public Github repo - please ask for the master data source.")
 st.write("#")
 
 st.subheader("General Application Information")
