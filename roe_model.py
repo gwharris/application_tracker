@@ -36,7 +36,7 @@ custom_colors = ["#d8c0c0", "#db9abc", "#d24d7c", "#98A4EB", "#5c7579", "#d59287
 total_apps = dash["# In Status"].sum()
 valid_responses = ["Interviewing", "Denied", "Rejected", "Offer"]
 response_rate = sum(1 for app_stat in apps["Status"].dropna() if app_stat in valid_responses)
-num_interviews = sum(1 for app_stat in apps["Status"].dropna() if app_stat in ["Interviewing", "Rejected"])
+num_interviews = sum(1 for app_stat in apps["Status"].dropna() if app_stat in ["Interviewing"])
 sum_interviews = apps["Number of Interviews"].sum()
 unique_companies = len(pd.unique(apps['Company']))
 
