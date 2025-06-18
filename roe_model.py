@@ -18,7 +18,7 @@ if os.path.exists(data_file):
     df = pd.read_excel(data_file)
     st.success("Data loaded from master file.")
 else:
-    alert = st.warning("Data file not found. Example data is loaded below.")
+    alert = st.warning("Master data file not found. Example data is loaded below.")
     data_file = "example_app_tracker.xlsx"
 
 apps = pd.read_excel(data_file, sheet_name="Tracker")
