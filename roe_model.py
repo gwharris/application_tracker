@@ -36,7 +36,8 @@ custom_colors = ["#d8c0c0", "#db9abc", "#d24d7c", "#98A4EB", "#5c7579", "#d59287
 total_apps = dash["# In Status"].sum()
 valid_responses = ["Interviewing", "Denied", "Rejected", "Offer"]
 response_rate = sum(1 for app_stat in apps["Status"].dropna() if app_stat in valid_responses)
-num_interviews = sum(1 for app_stat in apps["Status"].dropna() if app_stat in ["Interviewing"])
+num_interviews = sum(1 for app_stat in apps["Status"].dropna() if app_stat in ["Interviewing", "Rejected"])
+current_interviews = sum(1 for app_stat in apps["Status"].dropna() if app_stat in ["Interviewing"])
 sum_interviews = apps["Number of Interviews"].sum()
 unique_companies = len(pd.unique(apps['Company']))
 
@@ -93,7 +94,7 @@ with col3:
     with matrix1:
         rate = str('{0:.4g}'.format((response_rate/total_apps)*100)) + "%"
         st.metric("Response Rate:", rate)
-        traction_rate = str('{0:.3g}'.format((num_interviews/total_apps)*100)) + "%"
+        traction_rate = str('{0:.3g}'.format((current_interviews/total_apps)*100)) + "%"
         st.metric("Traction Rate:", traction_rate)
         st.metric("Unique companies:", unique_companies)
     with matrix2:
