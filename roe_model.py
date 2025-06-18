@@ -11,18 +11,20 @@ st.set_page_config(layout="wide")
 
 # -------------------- READ FILE --------------------
 # Check if file exists. Throws error if file is not present
-data_file = "app_tracker.xlsx"
+uploaded_file = "app_tracker.xlsx"
 
-if data_file:
-    source = data_file
+uploaded_file = st.file_uploader("Upload your job tracker Excel file", type=["xlsx"])
+
+if uploaded_file:
+    source = uploaded_file
 else:
     source = "example_app_tracker.xlsx"
     st.info("Loaded example data file. Upload your own to customize.")
 
-apps = pd.read_excel(data_file, sheet_name="Tracker")
-calc = pd.read_excel(data_file, sheet_name="Data Calculations")
-roe = pd.read_excel(data_file, sheet_name="ROE Calculation")
-dash = pd.read_excel(data_file, sheet_name="Dashboard")
+apps = pd.read_excel(uploaded_file, sheet_name="Tracker")
+calc = pd.read_excel(uploaded_file, sheet_name="Data Calculations")
+roe = pd.read_excel(uploaded_file, sheet_name="ROE Calculation")
+dash = pd.read_excel(uploaded_file, sheet_name="Dashboard")
 
 # -------------------- CONSTANTS --------------------
 
