@@ -4,6 +4,7 @@ import streamlit as st
 import matplotlib.pyplot as plt
 import altair as alt
 import os
+import time
 
 # Wide mode
 st.set_page_config(layout="wide")
@@ -11,13 +12,14 @@ st.set_page_config(layout="wide")
 # -------------------- READ FILE --------------------
 # Check if file exists. Throws error if file is not present
 data_file = "app_tracker.xlsx"
+alert = 0
 
 if os.path.exists(data_file):
     apps = pd.read_excel(data_file, sheet_name="Tracker")
     calc = pd.read_excel(data_file, sheet_name="Data Calculations")
     roe = pd.read_excel(data_file, sheet_name="ROE Calculation")
     dash = pd.read_excel(data_file, sheet_name="Dashboard")
-    st.success("Data loaded from local file.")
+    alert = st.success("Data loaded from local file.")
 else:
     st.warning("Data file not found. Please upload it below:")
     uploaded_file = st.file_uploader("Upload Job App Tracker.xlsx", type=["xlsx"])
@@ -29,11 +31,13 @@ else:
         roe = pd.read_excel(uploaded_file, sheet_name="ROE Calculation")
         uploaded_file.seek(0)
         dash = pd.read_excel(uploaded_file, sheet_name="Dashboard")
-        st.success("Data loaded from upload.")
+        alert = st.success("Data loaded from upload.")
     else:
         st.stop()
 
 # -------------------- CONSTANTS --------------------
+
+alert.empty() # Clear the alert
 
 # Example custom colors for each status
 status_order = dash["Status"].dropna()
@@ -100,7 +104,7 @@ with col3:
     with matrix1:
         rate = str('{0:.4g}'.format((response_rate/total_apps)*100)) + "%"
         st.metric("Response Rate:", rate)
-        traction_rate = str('{0:.4g}'.format((num_interviews/total_apps)*100)) + "%"
+        traction_rate = str('{0:.3g}'.format((num_interviews/total_apps)*100)) + "%"
         st.metric("Traction Rate:", traction_rate)
         st.metric("Unique companies:", unique_companies)
     with matrix2:
