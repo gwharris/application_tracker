@@ -30,13 +30,13 @@ dash = pd.read_excel(data_file, sheet_name="Dashboard")
 
 # Example custom colors for each status
 status_order = dash["Status"].dropna()
-custom_colors = ["#d8c0c0", "#db9abc", "#d24d7c", "#59474D", "#f59281", "#4db7cf", "#0d9937"]
+custom_colors = ["#d8c0c0", "#db9abc", "#d24d7c", "#98A4EB", "#5c7579", "#d59287", "#4db7cf", "#0d9937"]
 
 # Calculate response rate
 total_apps = dash["# In Status"].sum()
 valid_responses = ["Interviewing", "Denied", "Rejected", "Offer"]
 response_rate = sum(1 for app_stat in apps["Status"].dropna() if app_stat in valid_responses)
-num_interviews = sum(1 for app_stat in apps["Status"].dropna() if app_stat in ["Interviewing"])
+num_interviews = sum(1 for app_stat in apps["Status"].dropna() if app_stat in ["Interviewing", "Rejected"])
 sum_interviews = apps["Number of Interviews"].sum()
 unique_companies = len(pd.unique(apps['Company']))
 
