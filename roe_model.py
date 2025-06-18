@@ -22,10 +22,13 @@ else:
     st.warning("Data file not found. Please upload it below:")
     uploaded_file = st.file_uploader("Upload Job App Tracker.xlsx", type=["xlsx"])
     if uploaded_file:
-        apps = pd.read_excel(data_file, sheet_name="Tracker")
-        calc = pd.read_excel(data_file, sheet_name="Data Calculations")
-        roe = pd.read_excel(data_file, sheet_name="ROE Calculation")
-        dash = pd.read_excel(data_file, sheet_name="Dashboard")
+        apps = pd.read_excel(uploaded_file, sheet_name="Tracker")
+        uploaded_file.seek(0)
+        calc = pd.read_excel(uploaded_file, sheet_name="Data Calculations")
+        uploaded_file.seek(0)
+        roe = pd.read_excel(uploaded_file, sheet_name="ROE Calculation")
+        uploaded_file.seek(0)
+        dash = pd.read_excel(uploaded_file, sheet_name="Dashboard")
         st.success("Data loaded from upload.")
     else:
         st.stop()
