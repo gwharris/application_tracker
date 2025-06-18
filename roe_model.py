@@ -13,22 +13,22 @@ st.set_page_config(layout="wide")
 data_file = "app_tracker.xlsx"
 
 if os.path.exists(data_file):
-    
+    apps = pd.read_excel(data_file, sheet_name="Tracker")
+    calc = pd.read_excel(data_file, sheet_name="Data Calculations")
+    roe = pd.read_excel(data_file, sheet_name="ROE Calculation")
+    dash = pd.read_excel(data_file, sheet_name="Dashboard")
     st.success("Data loaded from local file.")
 else:
     st.warning("Data file not found. Please upload it below:")
     uploaded_file = st.file_uploader("Upload Job App Tracker.xlsx", type=["xlsx"])
     if uploaded_file:
-        df = pd.read_excel(uploaded_file)
+        apps = pd.read_excel(data_file, sheet_name="Tracker")
+        calc = pd.read_excel(data_file, sheet_name="Data Calculations")
+        roe = pd.read_excel(data_file, sheet_name="ROE Calculation")
+        dash = pd.read_excel(data_file, sheet_name="Dashboard")
         st.success("Data loaded from upload.")
     else:
         st.stop()
-
-# Load the Excel file and the correct sheet
-apps = pd.read_excel(data_file, sheet_name="Tracker")
-calc = pd.read_excel(data_file, sheet_name="Data Calculations")
-roe = pd.read_excel(data_file, sheet_name="ROE Calculation")
-dash = pd.read_excel(data_file, sheet_name="Dashboard")
 
 # -------------------- CONSTANTS --------------------
 
