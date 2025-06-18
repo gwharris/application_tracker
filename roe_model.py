@@ -12,32 +12,19 @@ st.set_page_config(layout="wide")
 # -------------------- READ FILE --------------------
 # Check if file exists. Throws error if file is not present
 data_file = "app_tracker.xlsx"
-alert = 0
 
-if os.path.exists(data_file):
-    apps = pd.read_excel(data_file, sheet_name="Tracker")
-    calc = pd.read_excel(data_file, sheet_name="Data Calculations")
-    roe = pd.read_excel(data_file, sheet_name="ROE Calculation")
-    dash = pd.read_excel(data_file, sheet_name="Dashboard")
-    alert = st.success("Data loaded from local file.")
+if data_file:
+    source = data_file
 else:
-    st.warning("Data file not found. Please upload it below:")
-    uploaded_file = st.file_uploader("Upload Job App Tracker.xlsx", type=["xlsx"])
-    if uploaded_file:
-        apps = pd.read_excel(uploaded_file, sheet_name="Tracker")
-        uploaded_file.seek(0)
-        calc = pd.read_excel(uploaded_file, sheet_name="Data Calculations")
-        uploaded_file.seek(0)
-        roe = pd.read_excel(uploaded_file, sheet_name="ROE Calculation")
-        uploaded_file.seek(0)
-        dash = pd.read_excel(uploaded_file, sheet_name="Dashboard")
-        alert = st.success("Data loaded from upload.")
-    else:
-        st.stop()
+    source = "example_app_tracker.xlsx"
+    st.info("Loaded example data file. Upload your own to customize.")
+
+apps = pd.read_excel(data_file, sheet_name="Tracker")
+calc = pd.read_excel(data_file, sheet_name="Data Calculations")
+roe = pd.read_excel(data_file, sheet_name="ROE Calculation")
+dash = pd.read_excel(data_file, sheet_name="Dashboard")
 
 # -------------------- CONSTANTS --------------------
-
-alert.empty() # Clear the alert
 
 # Example custom colors for each status
 status_order = dash["Status"].dropna()
@@ -121,7 +108,7 @@ with next1:
     st.text(" ")
     st.text(" ")
     st.text(" ")
-    st.text("For more information, resumes, or to see the data set, please email me at grahamh1019@gmail.com. Looking forward to hearing from you!")
+    st.text("For more information, my resume, or to see the original data set, please email me at grahamh1019@gmail.com. Looking forward to hearing from you!")
 
 with next2:
     st.text("Applications by platform:")
@@ -166,7 +153,7 @@ scatterplot = st.altair_chart(scatter, use_container_width=True)
 more1, more2 = st.columns(2)
 
 with more1:
-    st.text("""This is a measure of "return on effort" or how much theoretical effort it should take for me to get the job. Each point is measured by estimating effort for each application paltform (i.e. LinkedIn, Indeed, etc.), how likely I am as a candidate for that type of role, and how likely I am to get a given salary with my level of experience.""")
+    st.text("""This is a measure of "return on effort" or how much theoretical effort it should take for me to get the job. Each point is measured by estimating effort for each: platform, role type, and salary likelihood.""")
 
     st.text("Note: Applications 21 and 67 are dropped in the scatterplot because they are extreme outliers.")
     
@@ -174,7 +161,7 @@ with more2:
     # Status
     status_df = convert_to_st(dash, "# In Status", "Status")
     status = alt.Chart(status_df).mark_bar().encode(
-        x=alt.X("Status:O", title="Status"),
+        x=alt.X("Status:O", title="Status", sort=None),
         y=alt.Y("# In Status:Q", title="# In Status"),
         color=alt.Color("Status:N", 
                 title="Status", 
