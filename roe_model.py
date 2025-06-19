@@ -138,7 +138,7 @@ with next3:
 # -------------------- APP DATA --------------------
 
 st.write("#")
-st.subheader("Return on Effort")
+st.header("Return on Effort")
 
 # Scatterplot colored by application status
 roe_formatted = roe.reset_index().rename(columns={"index": "Application Number"})
@@ -156,12 +156,14 @@ scatterplot = st.altair_chart(scatter, use_container_width=True)
 more1, more2 = st.columns(2)
 
 with more1:
-    st.text("""This is a measure of "return on effort" or how much theoretical effort it should take for me to get the job. Each point is measured by estimating effort for each: platform, role type, and salary likelihood.""")
+    st.subheader("Theory:")
+    st.text("""This is a measure of "return on effort" or how much theoretical effort it should take for me to get the job. High values indicate that I *should* be an ideal applicant to the position. Low values indicate that it might be a stretch for me to get the job. Each point is measured by estimating the effort for each: platform, role type, and salary likelihood.""")
 
-    st.text("Note: Applications 21 and 67 are dropped in the scatterplot because they are extreme outliers.")
+    st.text("Note: Applications 21 and 67 are dropped in the scatterplot because they are extreme outliers in the master data.")
     
 with more2:
     # Status
+    st.text("As a bar graph:")
     status_df = convert_to_st(dash, "# In Status", "Status")
     status = alt.Chart(status_df).mark_bar().encode(
         x=alt.X("Status:O", title="Status", sort=None),
