@@ -34,7 +34,7 @@ custom_colors = ["#d8c0c0", "#db9abc", "#d24d7c", "#98A4EB", "#5c7579", "#d59287
 
 # Calculate response rate
 total_apps = dash["# In Status"].sum()
-valid_responses = ["Interviewing", "Denied", "Rejected", "Offer"]
+valid_responses = ["Interviewing", "Denied", "Rejected", "Offer", "Ghosted"]
 response_rate = sum(1 for app_stat in apps["Status"].dropna() if app_stat in valid_responses)
 num_interviews = sum(1 for app_stat in apps["Status"].dropna() if app_stat in ["Interviewing", "Rejected"])
 current_interviews = sum(1 for app_stat in apps["Status"].dropna() if app_stat in ["Interviewing"])
@@ -59,7 +59,7 @@ st.title("Job Application - Data Visualization")
 # Layer 1 Columns
 st.header("Graham Harris")
 st.text("Since being laid off in April 2025, I've been hard at work applying to new roles. This project is a culmination of all of the data I've collected, to showcase my data visualization skills.")
-st.text("Example data is loaded on the public Github repo - please ask for the master data source.")
+st.text("Example data is loaded on the public application - please ask for the master data source to see my actual application journey.")
 st.write("#")
 
 st.subheader("General Application Information")
