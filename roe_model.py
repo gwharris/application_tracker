@@ -62,10 +62,12 @@ st.text("Since being laid off in April 2025, I've been hard at work applying to 
 st.text("Example data is loaded on the public application - please ask for the master data source to see my actual application journey.")
 st.write("#")
 
-st.subheader("General Application Information")
+# -------------------- TABLE OF CONTENTS --------------------
 
+# INCLUDE A TABLE OF CONTENTS with a href="#hashtag"
 
 # -------------------- COLUMN 1 --------------------
+st.header("General Application Information")
 
 col1, col2, col3 = st.columns(3)
 with col1:
@@ -84,24 +86,24 @@ with col2:
     # Create the chart
     weekly = alt.Chart(weekly_df).mark_bar().encode(
         x=alt.X("Week Number:O", title="Week"),
-        y=alt.Y("Apps Per Week:Q", title="Applications")
+        y=alt.Y("Apps Per Week:Q", title="Applications"),
+        color=alt.value("#db9abc")
     )
     st.altair_chart(weekly, use_container_width=True)
 
 # Metrics
 with col3:
-    matrix1, matrix2, matrix3 = st.columns(3)
+    matrix1, matrix2 = st.columns(2)
     with matrix1:
         rate = str('{0:.4g}'.format((response_rate/total_apps)*100)) + "%"
         st.metric("Response Rate:", rate)
         traction_rate = str('{0:.3g}'.format((current_interviews/total_apps)*100)) + "%"
         st.metric("Traction Rate:", traction_rate)
-        st.metric("Unique companies:", unique_companies)
+        st.metric("Number of unique companies:", unique_companies)
     with matrix2:
-        st.metric("Roles interviewed for:", num_interviews)
-        st.metric("Total sum of interviews:", sum_interviews)
-    with matrix3:
-        st.write("#")
+        st.metric("Number of roles interviewed for:", num_interviews)
+        st.metric("All-time interviews:", sum_interviews)
+
 
 # -------------------- COLUMN 2 --------------------
 next1, next2, next3 = st.columns(3)
@@ -120,7 +122,8 @@ with next2:
     # Create the chart
     platform = alt.Chart(platform_df).mark_bar().encode(
         x=alt.X("Platform:O", title="Platform", sort=None),
-        y=alt.Y("Platform Applications:Q", title="# Applications Sent")
+        y=alt.Y("Platform Applications:Q", title="# Applications Sent"),
+        color=alt.value("#d59287")
     )
     st.altair_chart(platform, use_container_width=True)
 
@@ -131,11 +134,12 @@ with next3:
     # Create the chart
     platform = alt.Chart(platform_df).mark_bar().encode(
         x=alt.X("Role Type:O", title="Role Type", sort=None),
-        y=alt.Y("Count:Q", title="# Applied To")
+        y=alt.Y("Count:Q", title="# Applied To"),
+        color=alt.value("#98A4EB")
     )
     st.altair_chart(platform, use_container_width=True)
 
-# -------------------- APP DATA --------------------
+# -------------------- ROE DATA --------------------
 
 st.write("#")
 st.header("Return on Effort")
@@ -173,3 +177,22 @@ with more2:
                 scale=alt.Scale(domain=status_order, range=custom_colors))
     )
     st.altair_chart(status, use_container_width=True)
+
+# -------------------- INSIGHTS --------------------
+
+newcol1, newcol2 = st.columns(2)
+
+with newcol1:
+    st.header("Insights (Work In Progress)")
+    st.text("Note: These points are personal to my application journey and may not be true of the total application landscape.")
+    st.html(
+        "<ul style='padding-left: 5%'>" \
+        "<li>The most active hiring markets have been in marketing, AI, and data analytics.</li>" \
+        "<li>Companies average 3-5 interviews throughout the process. Generally the pattern is: 1) recruiter call, 2) hiring manager interview, 3) case study assessment, 4) final behavioral check.</li>" \
+        "<li>Referrals have generally not been helpful.</li>" \
+        "<li>Workday is a repetitve platform for applicants - large companies ask applicants to create an account and manually add information, which is time-consuming.</li>" \
+        "</ul>"
+    )
+
+with newcol2:
+    st.text(" ")
