@@ -4,7 +4,7 @@ import streamlit as st
 import matplotlib.pyplot as plt
 import altair as alt
 import os
-import time
+import numpy as np
 
 # Wide mode
 st.set_page_config(layout="wide")
@@ -53,6 +53,19 @@ def convert_to_st(df: pd.DataFrame, x: str, y: str):
     })
     return new_df
 
+# Function that shows how much I'm worth based on salary
+def likelihood(salary):
+    baseline = 115
+    decay_rate = 12
+    min_prob = 0.30
+    max_prob = 0.95
+    prob = np.where(
+        salary <= baseline,
+        max_prob,
+        min_prob + (max_prob - min_prob) * np.exp(-(salary - baseline) / decay_rate)
+    )
+    return prob
+
 # -------------------- HEADER --------------------
 st.title("Job Application - Data Visualization")
 
@@ -62,8 +75,17 @@ st.text("Since being laid off in April 2025, I've been hard at work applying to 
 st.text("Example data is loaded on the public application - please ask for the master data source to see my actual application journey.")
 
 # -------------------- TABLE OF CONTENTS --------------------
-
-# INCLUDE A TABLE OF CONTENTS with a href="#hashtag"
+st.html("<hr>")
+st.write("#")
+st.header("Table of Contents")
+st.html(
+    "<ol style='padding-left: 5%;'>"
+        "<li><a href='#raw-data'>Raw Data</a></li>"
+        "<li><a href='#application-breakdown'>Application Breakdown</a></li>"
+        "<li><a href='#return-on-effort'>Return on Effort</a></li>"
+        "<li><a href='#insights'>Insights</a></li>"
+    "</ol>"
+)
 
 # -------------------- COLUMN 1 --------------------
 st.write("#")
@@ -194,6 +216,8 @@ with more1:
         "<ol style='padding-left: 5%'>" \
         "<li>Applications 21 and 67 are dropped in the scatterplot because they are extreme outliers in the master data.</li>" \
         "<li>Roles that have a '0' ROE did not have a salary listed on the job posting.</li>" \
+        "<li>Referrals are not differentiated from cold applications in ROE - a better function might add a referral to the effort estimation.</li>" \
+        "<li>More often than not, the ROE is negative in the master dataset. This means that I'm applying to jobs that I think are a stretch, which is good because I'm trying to be ambitious in this process. I'm applying to titles that aer unlikely with my experience (like product manager) and at salaries that are a relatively large increase.</li>" \
         "</ol>"
     )
     
@@ -210,7 +234,27 @@ with more2:
     )
     st.altair_chart(status, use_container_width=True)
 
-    
+    # Estimated salary function
+    st.text("Salary likelyhood function:")
+    salaries = np.linspace(50, 200, 300)
+    probs = likelihood(salaries)
+    df = pd.DataFrame({'Salary': salaries, 'Likelihood': probs})
+    line = alt.Chart(df).mark_line().encode(
+        x=alt.X('Salary', title='Salary (k$)', axis=None),
+        y=alt.Y('Likelihood', title='Likelihood', scale=alt.Scale(domain=[0,1]))
+    )
+    baseline_rule = alt.Chart(pd.DataFrame({'x':[115]})).mark_rule(color='red', strokeDash=[5,5]).encode(
+        x='x'
+    )
+    text = alt.Chart(pd.DataFrame({'x':[115], 'y':[0.05]})).mark_text(
+        align='left', baseline='middle', dx=5, color='red'
+    ).encode(
+        x='x',
+        y='y',
+    )
+    chart = (line + baseline_rule + text)
+    st.altair_chart(chart, use_container_width=True)
+    st.text("The function above shows how salary impacts the ROE model. For all salaries below a certain point, I estimate I have a constant chance of getting those salaries based on my experience. After a certain value, the likelihood exponentially decreases to around 30%.")
 
 # -------------------- INSIGHTS --------------------
 st.html("<hr>")
@@ -218,14 +262,23 @@ st.write("#")
 c1, c2, c3 = st.columns([1, 6, 1])  # Adjust ratios to control padding
 
 with c2:
-    st.header("Insights (Work In Progress)")
-    st.text("Note: These points are personal to my application journey and may not be true of the total application landscape.")
-    st.html(
-        "<ul style='padding-left: 5%'>" \
-        "<li>The most active hiring markets have been in marketing, AI, and data analytics.</li>" \
-        "<li>Companies average 3-5 interviews throughout the process. Generally the pattern is: 1) recruiter call, 2) hiring manager interview, 3) case study assessment, 4) final behavioral check.</li>" \
-        "<li>Referrals have generally not been helpful.</li>" \
-        "<li>Workday is a repetitve platform for applicants - large companies ask applicants to create an account and manually add information, which is time-consuming.</li>" \
-        "</ul>"
-    )
+    st.header("Insights")
+    st.text("Note: These points are based on my application journey and may not be true of different industries or levels of experience.")
 
+# Insight points
+a, b, c, d, e = st.columns(5)
+with b:
+    st.subheader("1")
+    st.write("The most active hiring markets have been in marketing, AI, and data analytics.")
+    st.subheader("4")
+    st.write("Workday is a repetitve platform for applicants; account creation is time-consuming.")
+with c:
+    st.subheader("2")
+    st.write("There are 3-5 interviews in the average interview process. Generally: 1) recruiter call, 2) hiring manager interview, 3) case study, 4) final behavioral check.")
+    st.subheader("5")
+    st.write("Even companies with rigorous application processes send auto-denials; just because an application is harder to send does not make the job easier to obtain.")
+with d:
+    st.subheader("3")
+    st.write("Referrals have generally not been helpful.")
+    st.subheader("6")
+    st.write("I've tried resumes that are both 1 and 2 pages long. I've anecdotally noticed the most traction with 1 page.")
