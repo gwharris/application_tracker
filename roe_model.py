@@ -136,7 +136,7 @@ with next2:
     all_weeks = all_weeks[all_weeks['Week'] > 0]
     # --- Group by Week and sum Number of Interviews ---
     interviews_per_week = (
-        df.groupby('Week')['Number of Interviews']
+        apps.groupby('Week')['Number of Interviews']
         .sum()
         .reset_index(name='Interviews')
     )
