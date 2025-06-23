@@ -129,10 +129,10 @@ with next2:
 
     # Interviews Per Week
     # --- Clean and prepare the data ---
-    df['Week'] = pd.to_numeric(df['Week'], errors='coerce').fillna(0).astype(int)
-    df['Number of Interviews'] = pd.to_numeric(df['Number of Interviews'], errors='coerce').fillna(0).astype(int)
+    apps['Week'] = pd.to_numeric(apps['Week'], errors='coerce').fillna(0).astype(int)
+    apps['Number of Interviews'] = pd.to_numeric(apps['Number of Interviews'], errors='coerce').fillna(0).astype(int)
     # --- Get all positive week numbers in range ---
-    all_weeks = pd.DataFrame({'Week': range(df['Week'].min(), df['Week'].max() + 1)})
+    all_weeks = pd.DataFrame({'Week': range(apps['Week'].min(), apps['Week'].max() + 1)})
     all_weeks = all_weeks[all_weeks['Week'] > 0]
     # --- Group by Week and sum Number of Interviews ---
     interviews_per_week = (
