@@ -60,14 +60,15 @@ st.title("Job Application - Data Visualization")
 st.header("Graham Harris")
 st.text("Since being laid off in April 2025, I've been hard at work applying to new roles. This project is a culmination of all of the data I've collected, to showcase my data visualization skills.")
 st.text("Example data is loaded on the public application - please ask for the master data source to see my actual application journey.")
-st.write("#")
 
 # -------------------- TABLE OF CONTENTS --------------------
 
 # INCLUDE A TABLE OF CONTENTS with a href="#hashtag"
 
 # -------------------- COLUMN 1 --------------------
-st.header("General Application Information")
+st.write("#")
+st.html("<hr>")
+st.header("Raw Data")
 
 col1, col2, col3 = st.columns(3)
 with col1:
@@ -79,20 +80,8 @@ with col1:
     # Display the DataFrame
     st.dataframe(industry_df, hide_index=True)
 
-# Apps Per Week
-with col2:
-    st.text("Applications per week:")
-    weekly_df = convert_to_st(calc, "Week Number", "Apps Per Week")
-    # Create the chart
-    weekly = alt.Chart(weekly_df).mark_bar().encode(
-        x=alt.X("Week Number:O", title="Week"),
-        y=alt.Y("Apps Per Week:Q", title="Applications"),
-        color=alt.value("#db9abc")
-    )
-    st.altair_chart(weekly, use_container_width=True)
-
 # Metrics
-with col3:
+with col2:
     matrix1, matrix2 = st.columns(2)
     with matrix1:
         rate = str('{0:.4g}'.format((response_rate/total_apps)*100)) + "%"
@@ -104,16 +93,27 @@ with col3:
         st.metric("Number of roles interviewed for:", num_interviews)
         st.metric("All-time interviews:", sum_interviews)
 
+# Apps Per Week
+with col3:
+    st.text("For more information, my resume, or to see the original data set, please email me at grahamh1019@gmail.com. Looking forward to hearing from you!")
 
 # -------------------- COLUMN 2 --------------------
+st.html("<hr>")
+st.write("#")
+st.header("Application Breakdown")
+
 next1, next2, next3 = st.columns(3)
 
 with next1:
-    st.text(" ")
-    st.text(" ")
-    st.text(" ")
-    st.text(" ")
-    st.text("For more information, my resume, or to see the original data set, please email me at grahamh1019@gmail.com. Looking forward to hearing from you!")
+    st.text("Applications per week:")
+    weekly_df = convert_to_st(calc, "Week Number", "Apps Per Week")
+    # Create the chart
+    weekly = alt.Chart(weekly_df).mark_bar().encode(
+        x=alt.X("Week Number:O", title="Week"),
+        y=alt.Y("Apps Per Week:Q", title="Applications"),
+        color=alt.value("#db9abc")
+    )
+    st.altair_chart(weekly, use_container_width=True)
 
 with next2:
     st.text("Applications by platform:")
@@ -126,6 +126,33 @@ with next2:
         color=alt.value("#d59287")
     )
     st.altair_chart(platform, use_container_width=True)
+
+    # Interviews Per Week
+    # --- Clean and prepare the data ---
+    df['Week'] = pd.to_numeric(df['Week'], errors='coerce').fillna(0).astype(int)
+    df['Number of Interviews'] = pd.to_numeric(df['Number of Interviews'], errors='coerce').fillna(0).astype(int)
+    # --- Get all positive week numbers in range ---
+    all_weeks = pd.DataFrame({'Week': range(df['Week'].min(), df['Week'].max() + 1)})
+    all_weeks = all_weeks[all_weeks['Week'] > 0]
+    # --- Group by Week and sum Number of Interviews ---
+    interviews_per_week = (
+        df.groupby('Week')['Number of Interviews']
+        .sum()
+        .reset_index(name='Interviews')
+    )
+    # --- Merge with full week list to fill in missing weeks with 0 ---
+    interviews_per_week = pd.merge(all_weeks, interviews_per_week, on='Week', how='left').fillna(0)
+    interviews_per_week['Interviews'] = interviews_per_week['Interviews'].astype(int)
+    # --- Plot using Altair ---
+    st.text("Interviews by week applied:")
+    chart = alt.Chart(interviews_per_week).mark_bar().encode(
+        x=alt.X('Week:O', title='Week Number'),
+        y=alt.Y('Interviews:Q', title='Total Interviews'),
+        tooltip=['Week', 'Interviews'],
+        color=alt.value("#5c7579")
+    )
+    st.altair_chart(chart, use_container_width=True)
+    st.text("Note: This chart shows the number of interviews per week based on when the application was sent, not when the actual interview occured.")
 
 with next3:
     st.text("Applications by role:")
@@ -140,7 +167,7 @@ with next3:
     st.altair_chart(platform, use_container_width=True)
 
 # -------------------- ROE DATA --------------------
-
+st.html("<hr>")
 st.write("#")
 st.header("Return on Effort")
 
@@ -160,14 +187,19 @@ scatterplot = st.altair_chart(scatter, use_container_width=True)
 more1, more2 = st.columns(2)
 
 with more1:
-    st.subheader("Theory:")
-    st.text("""This is a measure of "return on effort" or how much theoretical effort it should take for me to get the job. High values indicate that I *should* be an ideal applicant to the position. Low values indicate that it might be a stretch for me to get the job. Each point is measured by estimating the effort for each: platform, role type, and salary likelihood.""")
-
-    st.text("Note: Applications 21 and 67 are dropped in the scatterplot because they are extreme outliers in the master data.")
+    st.subheader("'Return on Effort' Definition")
+    st.text("""This is a measure of "return on effort" or how much theoretical effort it should take for me to get the job. High values indicate that I should be an ideal applicant to the position. Low values indicate that it might be a stretch for me to get the job. Each point is measured by estimating the effort for each: platform, role type, and salary likelihood.""")
+    st.text("Notes about the data:")
+    st.html(
+        "<ol style='padding-left: 5%'>" \
+        "<li>Applications 21 and 67 are dropped in the scatterplot because they are extreme outliers in the master data.</li>" \
+        "<li>Roles that have a '0' ROE did not have a salary listed on the job posting.</li>" \
+        "</ol>"
+    )
     
 with more2:
-    # Status
-    st.text("As a bar graph:")
+    # Status total
+    st.text("Applications by status:")
     status_df = convert_to_st(dash, "# In Status", "Status")
     status = alt.Chart(status_df).mark_bar().encode(
         x=alt.X("Status:O", title="Status", sort=None),
@@ -178,11 +210,14 @@ with more2:
     )
     st.altair_chart(status, use_container_width=True)
 
+    
+
 # -------------------- INSIGHTS --------------------
+st.html("<hr>")
+st.write("#")
+c1, c2, c3 = st.columns([1, 6, 1])  # Adjust ratios to control padding
 
-newcol1, newcol2 = st.columns(2)
-
-with newcol1:
+with c2:
     st.header("Insights (Work In Progress)")
     st.text("Note: These points are personal to my application journey and may not be true of the total application landscape.")
     st.html(
@@ -194,5 +229,3 @@ with newcol1:
         "</ul>"
     )
 
-with newcol2:
-    st.text(" ")
