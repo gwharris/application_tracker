@@ -5,7 +5,6 @@ import matplotlib.pyplot as plt
 import altair as alt
 import os
 import numpy as np
-from datetime import datetime
 
 # Wide mode
 st.set_page_config(layout="wide", page_title="Application Data")
