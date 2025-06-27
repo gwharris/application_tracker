@@ -21,6 +21,7 @@ else:
     alert = st.warning("Note: Example data is loaded below.")
     data_file = "example_app_tracker.xlsx"
 
+# SHEETS
 apps = pd.read_excel(data_file, sheet_name="Tracker")
 roe = pd.read_excel(data_file, sheet_name="ROE Calculation")
 
@@ -132,7 +133,6 @@ st.html(
         "<li><a href='#application-breakdown'>Application Breakdown</a></li>"
         "<li><a href='#interviews'>Interviews</a></li>"
         "<li><a href='#return-on-effort'>Return on Effort</a></li>"
-        "<li><a href='#insights'>Insights</a></li>"
     "</ol>"
 )
 
@@ -157,7 +157,7 @@ st.subheader("Metrics")
 matrix1, matrix2 = st.columns(2)
 with matrix1:
     rate = str('{0:.4g}'.format((response_rate/total_apps)*100)) + "%"
-    st.metric("Response Rate:", rate)
+    st.metric("Response Rate (including auto-rejection):", rate)
     st.metric("Total number of applications:", total_apps)
     st.metric("Number of unique companies:", unique_companies)
 with matrix2:
@@ -205,7 +205,7 @@ with next2:
     st.text("Note: This chart shows the number of interviews per week based on when the application was sent, not when the actual interview occured.")
 
 with next3:
-    st.text("Applications by role:")
+    st.text("Applications by ROLE:")
     # Create the chart
     platform = alt.Chart(role_df).mark_bar().encode(
         x=alt.X("Role Type:O", title="Role Type", sort=None),
@@ -219,117 +219,115 @@ st.write("#")
 st.html("<hr style='border: 5px solid black; border-radius: 5px'>")
 st.header("Interviews")
 
-if data_file == "app_tracker.xlsx":
-    interviews = pd.read_excel(data_file, sheet_name="Interviews")
-    # Number of rounds
-    int_round_df = interviews.groupby(['Round', 'Type of Interview', 'Location']).agg({
-            'State': 'count',
-            'Performance': 'mean',
-            'Experience': 'mean'
-        }).reset_index().sort_values("Round")
-    just_round_df = interviews.groupby("Round").agg({
-            'State': 'count',
-            'Performance': 'mean',
-            'Experience': 'mean'
-        }).reset_index().sort_values("Round")
-    # Type of role
-    int_role_df = interviews.groupby(['Role Type', 'Type of Interview', 'Location']).agg({
-            'State': 'count',
-            'Round': 'mean',
-            'Performance': 'mean',
-            'Experience': 'mean'
-        }).reset_index().sort_values("State", ascending=False)
-    just_role_df = interviews.groupby('Role Type').agg({
-            'State': 'count',
-            'Round': 'mean',
-            'Performance': 'mean',
-            'Experience': 'mean'
-        }).reset_index().sort_values("State", ascending=False)
-    # Location
-    int_loc_df = interviews.groupby('Location').agg({
-            'State': 'count'
-        }).reset_index().sort_values("State", ascending=False)
-    # Type of interview
-    int_type_df = interviews.groupby('Type of Interview').agg({
-            'State': 'count'
-        }).reset_index().sort_values("State", ascending=False)
+
+interviews = pd.read_excel(data_file, sheet_name="Interviews")
+# Number of rounds
+int_round_df = interviews.groupby(['Round', 'Type of Interview', 'Location']).agg({
+        'State': 'count',
+        'Performance': 'mean',
+        'Experience': 'mean'
+    }).reset_index().sort_values("Round")
+just_round_df = interviews.groupby("Round").agg({
+        'State': 'count',
+        'Performance': 'mean',
+        'Experience': 'mean'
+    }).reset_index().sort_values("Round")
+# Type of role
+int_role_df = interviews.groupby(['Role Type', 'Type of Interview', 'Location']).agg({
+        'State': 'count',
+        'Round': 'mean',
+        'Performance': 'mean',
+        'Experience': 'mean'
+    }).reset_index().sort_values("State", ascending=False)
+just_role_df = interviews.groupby('Role Type').agg({
+        'State': 'count',
+        'Round': 'mean',
+        'Performance': 'mean',
+        'Experience': 'mean'
+    }).reset_index().sort_values("State", ascending=False)
+# Location
+int_loc_df = interviews.groupby('Location').agg({
+        'State': 'count'
+    }).reset_index().sort_values("State", ascending=False)
+# Type of interview
+int_type_df = interviews.groupby('Type of Interview').agg({
+        'State': 'count'
+    }).reset_index().sort_values("State", ascending=False)
     
-    # CHARTS
-    # Step 1: Convert to datetime
-    st.subheader("Heatmap of interviews:")
-    cal1, cal2, cal3 = st.columns([1,4,1])
-    with cal2:
-        interviews['Date'] = pd.to_datetime(interviews['Date'], format='%d-%b-%Y')
+# CHARTS
+# Convert to datetime
+st.subheader("Heatmap of interviews:")
+cal1, cal2, cal3 = st.columns([1,4,1])
+with cal2:
+    interviews['Date'] = pd.to_datetime(interviews['Date'], format='%d-%b-%Y')
 
-        # Step 2: Count occurrences per day
-        daily_counts = interviews['Date'].value_counts().reset_index()
-        daily_counts.columns = ['date', 'count']
-        daily_counts = daily_counts.sort_values('date')
+    # Step 2: Count occurrences per day
+    daily_counts = interviews['Date'].value_counts().reset_index()
+    daily_counts.columns = ['date', 'count']
+    daily_counts = daily_counts.sort_values('date')
 
-        # Step 3: Add calendar fields
-        daily_counts['day'] = daily_counts['date'].dt.dayofweek     # 0 = Monday
-        daily_counts['week'] = daily_counts['date'].dt.isocalendar().week
-        daily_counts['month'] = daily_counts['date'].dt.strftime('%B')
+    # Step 3: Add calendar fields
+    daily_counts['day'] = daily_counts['date'].dt.dayofweek     # 0 = Monday
+    daily_counts['week'] = daily_counts['date'].dt.isocalendar().week
+    daily_counts['month'] = daily_counts['date'].dt.strftime('%B')
 
-        # Step 4: Plot calendar-style heatmap
-        heatmap = alt.Chart(daily_counts).mark_rect().encode(
-            x=alt.X('week:O', title='Week Number'),
-            y=alt.Y('day:O', title='Day of Week',
-                    sort=[0, 1, 2, 3, 4, 5, 6],
-                    axis=alt.Axis(
-                        labels=True,
-                        labelExpr="['Mon','Tue','Wed','Thu','Fri','Sat','Sun'][datum.value]"
-                    )),
+    # Step 4: Plot calendar-style heatmap
+    heatmap = alt.Chart(daily_counts).mark_rect().encode(
+        x=alt.X('week:O', title='Week Number'),
+        y=alt.Y('day:O', title='Day of Week',
+            sort=[0, 1, 2, 3, 4, 5, 6],
+            axis=alt.Axis(
+            labels=True,
+            labelExpr="['Mon','Tue','Wed','Thu','Fri','Sat','Sun'][datum.value]"
+        )),
             color=alt.Color('count:Q', scale=alt.Scale(scheme='blues'), title='Frequency'),
             tooltip=['date:T', 'count:Q']
         )
-        st.altair_chart(heatmap, use_container_width=True)
+    st.altair_chart(heatmap, use_container_width=True)
 
-    # Rounds 1
-    st.subheader("Grouped by NUMBER OF ROUNDS:")
-    color_field = st.selectbox(
-            "Choose to color by:",
-            options=["Type of Interview", "Location"]
-        )
-    r1, r2 = st.columns(2, border=True)
-    with r1:
-        round = alt.Chart(int_round_df).mark_bar().encode(
-            x=alt.X("Round:O", title="Interview Round"),
-            y=alt.Y("State:Q", title="Count"),
-            color=alt.Color(f'{color_field}:N', title=color_field, scale=alt.Scale(scheme='blueorange')),
-        )
-        st.altair_chart(round, use_container_width=True)
-    with r2:
-        st.write("###")
-        # Rounds line chart
-        roundp = alt.Chart(just_round_df).mark_line(color='#206fb2').encode(
-            x=alt.X("Round:O", title="Interview Round"),
-            y=alt.Y("Performance:Q", title="Rating Performance & Experience")
-        )
-        rounde = alt.Chart(just_round_df).mark_line(color='#a8cee5').encode(
-            x=alt.X("Round:O", title="Interview Round"),
-            y=alt.Y("Experience:Q", title="")
-        )
-        layered_chart = alt.layer(roundp, rounde)
-        st.altair_chart(layered_chart)  # or use layered_chart
+# Rounds 1
+st.subheader("Grouped by NUMBER OF ROUNDS:")
+color_field = st.selectbox(
+    "Choose to color by:",
+    options=["Type of Interview", "Location"]
+    )
+r1, r2 = st.columns(2, border=True)
+with r1:
+    round = alt.Chart(int_round_df).mark_bar().encode(
+        x=alt.X("Round:O", title="Interview Round"),
+        y=alt.Y("State:Q", title="Count"),
+        color=alt.Color(f'{color_field}:N', title=color_field, scale=alt.Scale(scheme='blueorange')),
+    )
+    st.altair_chart(round, use_container_width=True)
+with r2:
+    st.write("###")
+    # Rounds line chart
+    roundp = alt.Chart(just_round_df).mark_line(color='#206fb2').encode(
+        x=alt.X("Round:O", title="Interview Round"),
+        y=alt.Y("Performance:Q", title="Rating Performance & Experience")
+    )
+    rounde = alt.Chart(just_round_df).mark_line(color='#a8cee5').encode(
+        x=alt.X("Round:O", title="Interview Round"),
+        y=alt.Y("Experience:Q", title="")
+    )
+    layered_chart = alt.layer(roundp, rounde)
+    st.altair_chart(layered_chart)  # or use layered_chart
 
     # Role
-    st.subheader("Grouped by ROLE TYPE:")
-    r1, r2 = st.columns(2, border=True)
-    with r1:
-        role = alt.Chart(int_role_df).mark_bar().encode(
-            x=alt.X("Role Type:O", title="Role Type"),
-            y=alt.Y("State:Q", title="Count"),
-            color=alt.Color(f'{color_field}:N', title=color_field, scale=alt.Scale(scheme='blueorange')),
-        )
-        st.altair_chart(role, use_container_width=True)
-    with r2:
-        st.write("###")
-        # Rounds line chart
-        st.bar_chart(just_role_df, x="Role Type", y=['Experience', 'Performance'], stack=False)
 
-else:
-    st.text("Interviews not available with example data. Please ask to see the original data set.")
+st.subheader("Grouped by ROLE TYPE:")
+r1, r2 = st.columns(2, border=True)
+with r1:
+    role = alt.Chart(int_role_df).mark_bar().encode(
+        x=alt.X("Role Type:O", title="Role Type"),
+        y=alt.Y("State:Q", title="Count"),
+        color=alt.Color(f'{color_field}:N', title=color_field, scale=alt.Scale(scheme='blueorange')),
+    )
+    st.altair_chart(role, use_container_width=True)
+with r2:
+    st.write("###")
+    # Rounds line chart
+    st.bar_chart(just_role_df, x="Role Type", y=['Experience', 'Performance'], stack=False)
 
 # ---------------------------------------- ROE
 st.write("#")
@@ -404,7 +402,7 @@ with more2:
         baseline_rule = alt.Chart(pd.DataFrame({'x':[avg_salary]})).mark_rule(color='red', strokeDash=[5,5]).encode(
             x='x'
         )
-        text = alt.Chart(pd.DataFrame({'x':[115], 'y':[0.05]})).mark_text(
+        text = alt.Chart(pd.DataFrame({'x':[avg_salary], 'y':[0.05]})).mark_text(
             align='left', baseline='middle', dx=5, color='red'
         ).encode(
             x='x',
@@ -414,34 +412,3 @@ with more2:
         st.altair_chart(chart, use_container_width=True)
         st.text("The function above shows how salary impacts the ROE model. For all salaries below a certain point, I estimate I have a constant chance of getting those salaries based on my experience. After a certain value, the likelihood exponentially decreases to around 30%.")
         st.text("The red line is the average salary expectation.")
-
-# ---------------------------------------- INSIGHTS
-
-if data_file == "app_tracker.xlsx":
-    st.write("#")
-    st.html("<hr style='border: 5px solid black; border-radius: 5px'>")
-    c1, c2, c3 = st.columns([1, 6, 1])  # Adjust ratios to control padding
-
-    with c2:
-        st.header("Insights")
-        st.text("Note: These points are based on my application journey and may not be true of different industries or levels of experience.")
-
-    # Insights
-    a, b, c, d, e = st.columns(5)
-    with b:
-        st.subheader("1")
-        st.write("The most active hiring markets have been in marketing, AI, and data analytics.")
-        st.subheader("4")
-        st.write("Workday is a repetitve platform for applicants; account creation is time-consuming.")
-    with c:
-        st.subheader("2")
-        st.write("There are 3-5 interviews in the average interview process. Generally: 1) recruiter call, 2) hiring manager interview, 3) case study, 4) final behavioral check.")
-        st.subheader("5")
-        st.write("Even companies with rigorous application processes send auto-denials; just because an application is harder to send does not make the job easier to obtain.")
-    with d:
-        st.subheader("3")
-        st.write("Referrals have generally not been helpful.")
-        st.subheader("6")
-        st.write("I've tried resumes that are both 1 and 2 pages long. I've anecdotally noticed the most traction with 1 page.")
-else:
-    st.text("Insights not available with example data. Please ask to see the original data set.")
