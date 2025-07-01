@@ -5,6 +5,7 @@ import matplotlib.pyplot as plt
 import altair as alt
 import os
 import numpy as np
+import openpyxl
 
 # Wide mode
 st.set_page_config(layout="wide", page_title="Application Data")
@@ -354,8 +355,8 @@ scatter = alt.Chart(filtered_data).mark_circle(size=60).encode(
     x=alt.X("Application Number:Q", title="Application Number"),
     y=alt.Y("Return on Effort:Q", title="Return on Effort"),
     color=alt.Color("Application Status:N", 
-                    title="Status", 
-                    scale=alt.Scale(domain=status_order, range=custom_colors)),
+                    title="Status"
+                    ),
     tooltip=["Application Number", "Company Name", "Application Status", "Return on Effort"]
 )
 # Display
@@ -383,8 +384,7 @@ with more2:
         x=alt.X("Status:O", title="Status", sort=None),
         y=alt.Y("Applications In Status:Q", title="# In Status"),
         color=alt.Color("Status:N", 
-                title="Status", 
-                scale=alt.Scale(domain=status_order, range=custom_colors))
+                title="Status")
     )
     st.altair_chart(status, use_container_width=True)
 
