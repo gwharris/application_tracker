@@ -34,8 +34,10 @@ custom_colors = ["#d8c0c0", "#db9abc", "#d24d7c", "#98A4EB", "#5c7579", "#d59287
 
 # Calculate response rate
 total_apps = apps[apps.columns[0]].count()
-valid_responses = ["Interviewing", "Denied", "Rejected", "Offer", "Ghosted"]
-response_rate = sum(1 for app_stat in apps["Status"].dropna() if app_stat in valid_responses)
+all_resp = ["Interviewing", "Denied", "Rejected", "Offer", "Ghosted"]
+real_resp = ["Interviewing", "Rejected", "Offer", "Ghosted"]
+response_rate = sum(1 for app_stat in apps["Status"].dropna() if app_stat in all_resp)
+real_response_rate = sum(1 for app_stat in apps["Status"].dropna() if app_stat in real_resp)
 num_interviews = sum(1 for app_stat in apps["Status"].dropna() if app_stat in ["Interviewing", "Rejected"])
 current_interviews = sum(1 for app_stat in apps["Status"].dropna() if app_stat in ["Interviewing"])
 sum_interviews = apps["Number of Interviews"].sum()
@@ -154,17 +156,30 @@ with col2:
     # Display the DataFrame
     st.dataframe(role_df, hide_index=True)
 
-st.subheader("Metrics")
+st.html("<hr>")
+st.subheader("Responses")
 matrix1, matrix2 = st.columns(2)
 with matrix1:
     rate = str('{0:.4g}'.format((response_rate/total_apps)*100)) + "%"
     st.metric("Response Rate (including auto-rejection):", rate)
-    st.metric("Total number of applications:", total_apps)
-    st.metric("Number of unique companies:", unique_companies)
+    rate2 = str('{0:.4g}'.format((real_response_rate/total_apps)*100)) + "%"
+    st.metric("Real response Rate (excluding auto-rejection):", rate2)
 with matrix2:
     traction_rate = str('{0:.3g}'.format((current_interviews/last_four_weeks)*100)) + "%"
-    st.metric("Current traction (% interviews from applications in the last 4 weeks):", traction_rate)
+    st.metric("Current traction (% interviews from applications in the last 4 weeks):", traction_rate)  
+st.html("<hr>")
+st.subheader("Companies")
+matrix3, matrix4 = st.columns(2)
+with matrix3:
+    st.metric("Total number of applications:", total_apps)
+with matrix4:
+    st.metric("Number of unique companies:", unique_companies)
+st.html("<hr>")
+st.subheader("Interviews")
+matrix5, matrix6 = st.columns(2)
+with matrix5:
     st.metric("Number of roles interviewed for:", num_interviews)
+with matrix6:
     st.metric("All-time interviews:", sum_interviews)
 st.text("For more information, my resume, or to see the original data set, please email me at grahamh1019@gmail.com. Looking forward to hearing from you!")
 
