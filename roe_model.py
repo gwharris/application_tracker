@@ -352,7 +352,6 @@ st.header("Return on Effort")
 
 # Scatterplot colored by application status
 roe_formatted = roe.reset_index().rename(columns={"index": "Application Number"})
-roe_formatted = roe_formatted.drop([21, 67])
 # Get unique statuses from your data
 unique_statuses = roe_formatted["Application Status"].unique().tolist()
 # Drop the weird zero at the end
@@ -368,11 +367,11 @@ filtered_data = roe_formatted[roe_formatted["Application Status"].isin(selected_
 # Scatterplot
 scatter = alt.Chart(filtered_data).mark_circle(size=60).encode(
     x=alt.X("Application Number:Q", title="Application Number"),
-    y=alt.Y("Return on Effort:Q", title="Return on Effort"),
+    y=alt.Y("Chance of Success:Q", title="Chance of Success"),
     color=alt.Color("Application Status:N", 
                     title="Status"
                     ),
-    tooltip=["Application Number", "Company Name", "Application Status", "Return on Effort"]
+    tooltip=["Application Number", "Company Name", "Application Status", "Chance of Success"]
 )
 # Display
 scatterplot = st.altair_chart(scatter, use_container_width=True)
@@ -380,14 +379,13 @@ scatterplot = st.altair_chart(scatter, use_container_width=True)
 more1, more2 = st.columns(2, border=True)
 
 with more1:
-    st.subheader("'Return on Effort' Definition")
-    st.text("""This is a measure of "return on effort" or how much theoretical effort it should take for me to get the job. High values indicate that I should be an ideal applicant to the position. Low values indicate that it might be a stretch for me to get the job. Each point is measured by estimating the effort for each: platform, role type, and salary likelihood.""")
+    st.subheader("'Chance of Success' Definition")
+    st.text("""This is a measure of the likelihood of success, or the chance I think I have of getting an offer. High values indicate that I should be an ideal applicant to the position. Low values indicate that it might be a stretch for me to get the job. Each point is measured by estimating the effort for each: platform, role type, and salary likelihood.""")
     st.text("Notes about the data:")
     st.html(
         "<ol style='padding-left: 5%'>" \
-        "<li>Applications 21 and 67 are dropped in the scatterplot because they are extreme outliers in the master data.</li>" \
-        "<li>Roles that have a '0' ROE did not have a salary listed on the job posting.</li>" \
-        "<li>Referrals are not differentiated from cold applications in ROE - a better function might add a referral to the effort estimation.</li>" \
+        "<li>Roles that have an exact '0.5' ROE did not have a salary listed on the job posting.</li>" \
+        "<li>Referrals are not differentiated from cold applications - a better function might add a referral to the effort estimation.</li>" \
         "<li>More often than not, the ROE is negative in the master dataset. This means that I'm applying to jobs that I think are a stretch, which is good because I'm trying to be ambitious in this process. I'm applying to titles that aer unlikely with my experience (like product manager) and at salaries that are a relatively large increase.</li>" \
         "</ol>"
     )
@@ -403,27 +401,14 @@ with more2:
     )
     st.altair_chart(status, use_container_width=True)
 
-    if data_file == "app_tracker.xlsx":
-
-        # Estimated salary function
-        st.text("Salary likelyhood function:")
-        salaries = np.linspace(50, 200, 300)
-        probs = likelihood(salaries)
-        df = pd.DataFrame({'Salary': salaries, 'Likelihood': probs})
-        line = alt.Chart(df).mark_line().encode(
-            x=alt.X('Salary', title='Salary (k$)', axis=None),
-            y=alt.Y('Likelihood', title='Likelihood', scale=alt.Scale(domain=[0,1]))
-        )
-        baseline_rule = alt.Chart(pd.DataFrame({'x':[avg_salary]})).mark_rule(color='red', strokeDash=[5,5]).encode(
-            x='x'
-        )
-        text = alt.Chart(pd.DataFrame({'x':[avg_salary], 'y':[0.05]})).mark_text(
-            align='left', baseline='middle', dx=5, color='red'
-        ).encode(
-            x='x',
-            y='y',
-        )
-        chart = (line + baseline_rule + text)
-        st.altair_chart(chart, use_container_width=True)
-        st.text("The function above shows how salary impacts the ROE model. For all salaries below a certain point, I estimate I have a constant chance of getting those salaries based on my experience. After a certain value, the likelihood exponentially decreases to around 30%.")
-        st.text("The red line is the average salary expectation.")
+# Scatterplot
+scatter = alt.Chart(filtered_data).mark_circle(size=60).encode(
+    x=alt.X("Application Number:Q", title="Application Number"),
+    y=alt.Y("ROE:Q", title="Return on Effort"),
+    color=alt.Color("Application Status:N", 
+                    title="Status"
+                    ),
+    tooltip=["Application Number", "Company Name", "Application Status", "ROE"]
+)
+# Display
+scatterplot = st.altair_chart(scatter, use_container_width=True)
