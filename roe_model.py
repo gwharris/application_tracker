@@ -390,6 +390,21 @@ with more1:
         "<li>More often than not, the ROE is negative in the master dataset. This means that I'm applying to jobs that I think are a stretch, which is good because I'm trying to be ambitious in this process. I'm applying to titles that aer unlikely with my experience (like product manager) and at salaries that are a relatively large increase.</li>" \
         "</ol>"
     )
+
+    total_roe = roe['Chance of Success'].sum()
+    responses_roe = roe['Application Status'].isin(['Rejected', 'Bailed', 'Interviewing', 'Ghosted', 'On Hold']).sum()
+    total_above_1 = (roe['Chance of Success'] > 0.5).sum()
+    responses_above_1 = ((roe['Chance of Success'] > 0.5) & 
+                         (roe['Application Status'].isin(['Rejected', 'Bailed', 'Interviewing', 'Ghosted', 'On Hold']))).sum()
+    total_chance = (responses_roe/total_roe)*100
+    positive_chance = (responses_above_1/total_above_1)*100
+    accuracy = (positive_chance/total_chance)*100
+    st.metric("Total response rate:", 
+              f"{total_chance:.2f}%")
+    st.metric("Response rate where the chance of success above 50%:", 
+              f"{positive_chance:.2f}%")
+    st.metric("Accuracy of the chance of success metric:", 
+              f"{accuracy:.2f}%")
     
 with more2:
     # Status total
