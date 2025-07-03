@@ -384,11 +384,12 @@ more1, more2 = st.columns(2, border=True)
 
 with more1:
     st.subheader("'Chance of Success' Definition")
-    st.text("""This is a measure of the likelihood of success, or the chance I think I have of getting an offer. High values indicate that I should be an ideal applicant to the position. Low values indicate that it might be a stretch for me to get the job. Each point is measured by estimating the effort for each: role, salary, and industry.""")
+    st.text("""This is a measure of the likelihood of success, or the chance I think I have of getting an offer. High values indicate that I should be an ideal applicant to the position. Low values indicate that it might be a stretch for me to get the job. Each point is measured by estimating the effort for each: role, average salary, salary range (max - min salary), and industry.""")
     st.text("Notes about the data:")
     st.html(
         "<ol style='padding-left: 5%'>" \
         "<li>Roles that have an exact '0.5' chance of success did not have a salary listed on the job posting.</li>" \
+        "<li>The salary range is a confidence score. When companies have narrow salary ranges (IE 80-90k has a 10k range) the company likely has a set expectation for the role. If the range is extremely high (IE $100k or more) then the role seems ambiguous and it's not clear how the company is hiring or what a realistic salary is, and they may even be hiring for multiple levels of experience.</li>" \
         "</ol>"
     )
 
