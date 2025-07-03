@@ -365,6 +365,7 @@ selected_statuses = st.multiselect(
 # Filter the data
 filtered_data = roe_formatted[roe_formatted["Application Status"].isin(selected_statuses)]
 # Scatterplot
+st.subheader('Chance of Success')
 scatter = alt.Chart(filtered_data).mark_circle(size=60).encode(
     x=alt.X("Application Number:Q", title="Application Number"),
     y=alt.Y("Chance of Success:Q", title="Chance of Success"),
@@ -402,7 +403,21 @@ with more2:
     st.altair_chart(status, use_container_width=True)
 
 # Scatterplot
-scatter = alt.Chart(filtered_data).mark_circle(size=60).encode(
+st.subheader('Application Effort')
+effort_plot = alt.Chart(filtered_data).mark_circle(size=60).encode(
+    x=alt.X("Application Number:Q", title="Application Number"),
+    y=alt.Y("Application Effort:Q", title="Application Effort"),
+    color=alt.Color("Application Status:N", 
+                    title="Status"
+                    ),
+    tooltip=["Application Number", "Company Name", "Application Status", "Application Effort"]
+)
+# Display
+effort_scatterplot = st.altair_chart(effort_plot, use_container_width=True)
+
+# Scatterplot
+st.subheader('Return on Effort')
+roe_plot = alt.Chart(filtered_data).mark_circle(size=60).encode(
     x=alt.X("Application Number:Q", title="Application Number"),
     y=alt.Y("ROE:Q", title="Return on Effort"),
     color=alt.Color("Application Status:N", 
@@ -411,4 +426,4 @@ scatter = alt.Chart(filtered_data).mark_circle(size=60).encode(
     tooltip=["Application Number", "Company Name", "Application Status", "ROE"]
 )
 # Display
-scatterplot = st.altair_chart(scatter, use_container_width=True)
+roe_scatterplot = st.altair_chart(roe_plot, use_container_width=True)
