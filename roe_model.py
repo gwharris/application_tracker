@@ -34,11 +34,11 @@ custom_colors = ["#d8c0c0", "#db9abc", "#d24d7c", "#98A4EB", "#5c7579", "#d59287
 
 # Calculate response rate
 total_apps = apps[apps.columns[0]].count()
-all_resp = ["Interviewing", "Denied", "Rejected", "Offer", "Ghosted"]
-real_resp = ["Interviewing", "Rejected", "Offer", "Ghosted"]
+all_resp = ['Rejected', 'Bailed', 'Interviewing', 'Ghosted', 'On Hold', 'Denied', 'Offer']
+real_resp = ['Rejected', 'Bailed', 'Interviewing', 'Ghosted', 'On Hold', 'Offer']
 response_rate = sum(1 for app_stat in apps["Status"].dropna() if app_stat in all_resp)
 real_response_rate = sum(1 for app_stat in apps["Status"].dropna() if app_stat in real_resp)
-num_interviews = sum(1 for app_stat in apps["Status"].dropna() if app_stat in ["Interviewing", "Rejected"])
+num_interviews = sum(1 for app_stat in apps["Status"].dropna() if app_stat in real_resp)
 current_interviews = sum(1 for app_stat in apps["Status"].dropna() if app_stat in ["Interviewing"])
 sum_interviews = apps["Number of Interviews"].sum()
 unique_companies = len(pd.unique(apps['Company']))
@@ -113,6 +113,7 @@ platform_df = apps.groupby('Platform').agg({
 
 status_df = apps.groupby('Status').agg({
         'Role Type': 'count',
+        'Number of Interviews': 'sum'
     }).rename(columns={
         'Role Type': 'Applications In Status'
     }).reset_index().sort_values("Applications In Status", ascending=False)
@@ -161,26 +162,28 @@ st.subheader("Responses")
 matrix1, matrix2 = st.columns(2)
 with matrix1:
     rate = str('{0:.4g}'.format((response_rate/total_apps)*100)) + "%"
-    st.metric("Response Rate (including auto-rejection):", rate)
+    st.metric("Response Rate (including auto-denials):", rate)
     rate2 = str('{0:.4g}'.format((real_response_rate/total_apps)*100)) + "%"
-    st.metric("Real response Rate (excluding auto-rejection):", rate2)
+    st.metric("Real Response Rate (excluding auto-denials):", rate2)
 with matrix2:
     traction_rate = str('{0:.3g}'.format((current_interviews/last_four_weeks)*100)) + "%"
-    st.metric("Current traction (% interviews from applications in the last 4 weeks):", traction_rate)  
+    st.metric("% of applications currently in the interview phase:", traction_rate)  
 st.html("<hr>")
+
 st.subheader("Companies")
 matrix3, matrix4 = st.columns(2)
 with matrix3:
     st.metric("Total number of applications:", total_apps)
 with matrix4:
-    st.metric("Number of unique companies:", unique_companies)
+    st.metric("Number of UNIQUE companies:", unique_companies)
 st.html("<hr>")
+
 st.subheader("Interviews")
 matrix5, matrix6 = st.columns(2)
 with matrix5:
     st.metric("Number of roles interviewed for:", num_interviews)
 with matrix6:
-    st.metric("All-time interviews:", sum_interviews)
+    st.metric("Total interviews:", sum_interviews)
 st.text("For more information, my resume, or to see the original data set, please email me at grahamh1019@gmail.com. Looking forward to hearing from you!")
 
 # ---------------------------------------- APP DATA
@@ -381,30 +384,27 @@ more1, more2 = st.columns(2, border=True)
 
 with more1:
     st.subheader("'Chance of Success' Definition")
-    st.text("""This is a measure of the likelihood of success, or the chance I think I have of getting an offer. High values indicate that I should be an ideal applicant to the position. Low values indicate that it might be a stretch for me to get the job. Each point is measured by estimating the effort for each: platform, role type, and salary likelihood.""")
+    st.text("""This is a measure of the likelihood of success, or the chance I think I have of getting an offer. High values indicate that I should be an ideal applicant to the position. Low values indicate that it might be a stretch for me to get the job. Each point is measured by estimating the effort for each: role, salary, and industry.""")
     st.text("Notes about the data:")
     st.html(
         "<ol style='padding-left: 5%'>" \
-        "<li>Roles that have an exact '0.5' ROE did not have a salary listed on the job posting.</li>" \
-        "<li>Referrals are not differentiated from cold applications - a better function might add a referral to the effort estimation.</li>" \
-        "<li>More often than not, the ROE is negative in the master dataset. This means that I'm applying to jobs that I think are a stretch, which is good because I'm trying to be ambitious in this process. I'm applying to titles that aer unlikely with my experience (like product manager) and at salaries that are a relatively large increase.</li>" \
+        "<li>Roles that have an exact '0.5' chance of success did not have a salary listed on the job posting.</li>" \
         "</ol>"
     )
 
-    total_roe = roe['Chance of Success'].sum()
-    responses_roe = roe['Application Status'].isin(['Rejected', 'Bailed', 'Interviewing', 'Ghosted', 'On Hold']).sum()
     total_above_1 = (roe['Chance of Success'] > 0.5).sum()
     responses_above_1 = ((roe['Chance of Success'] > 0.5) & 
                          (roe['Application Status'].isin(['Rejected', 'Bailed', 'Interviewing', 'Ghosted', 'On Hold']))).sum()
-    total_chance = (responses_roe/total_roe)*100
     positive_chance = (responses_above_1/total_above_1)*100
-    accuracy = (positive_chance/total_chance)*100
-    st.metric("Total response rate:", 
-              f"{total_chance:.2f}%")
-    st.metric("Response rate where the chance of success above 50%:", 
+    total_accuracy = real_response_rate/total_apps
+    accuracy = (positive_chance-total_accuracy)/total_accuracy-100
+    st.metric("Real response rate (exluding auto-denials):", 
+              rate2)
+    st.metric("Response rate where the chance of success is above 50%:", 
               f"{positive_chance:.2f}%")
     st.metric("Accuracy of the chance of success metric:", 
               f"{accuracy:.2f}%")
+    st.text("This means that applications with more than a 50% chance of success have a " + f"{(accuracy):.2f}%" + " higher chance of leading to a response than applications below 50% chance.")
     
 with more2:
     # Status total
@@ -429,6 +429,14 @@ effort_plot = alt.Chart(filtered_data).mark_circle(size=60).encode(
 )
 # Display
 effort_scatterplot = st.altair_chart(effort_plot, use_container_width=True)
+st.text("""This is a measure of how much effort has been put into an application. High values indicate that a lot of effort has been put into an application and low values indicate low levels of effort was put in.  Each point is measured by estimating the effort for each: status (applied, interviewing, rejected, etc), platform, and number of interviews.""")
+st.text("Notes about the data:")
+st.html(
+        "<ol style='padding-left: 5%'>" \
+        "<li>Each interview linearly increases the effort.</li>" \
+        "<li>Platforms with 'easy apply' are rated more 'easy' than platforms that need fresh information with each application.</li>" \
+        "</ol>"
+)
 
 # Scatterplot
 st.subheader('Return on Effort')
@@ -442,3 +450,4 @@ roe_plot = alt.Chart(filtered_data).mark_circle(size=60).encode(
 )
 # Display
 roe_scatterplot = st.altair_chart(roe_plot, use_container_width=True)
+st.text("""The return on investment, or in this case, return on effort (ROE). For example, if the ROE is 3, there would be a 3X return on the effort that I put into the application. Return on effort is qualitative and doesn't exactly capture the experience of an application. For example, getting an interview from an application does more than just reward effort - it signifies that something was right in the application (like resume, cover letter, experience, etc.) and validates the direction of future applications. In the end, the only thing that really matters is getting an offer, so offers are weighted at a 10X value.""")
