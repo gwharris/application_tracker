@@ -25,19 +25,22 @@ else:
 # SHEETS
 apps = pd.read_excel(data_file, sheet_name="Tracker")
 roe = pd.read_excel(data_file, sheet_name="ROE Calculation")
+interviews = pd.read_excel(data_file, sheet_name="Interviews")
 
 # ---------------------------------------- CONSTANTS
 
-# Example custom colors for each status
+# List of statuses
 status_order = pd.unique(apps["Status"].dropna())
-custom_colors = ["#d8c0c0", "#db9abc", "#d24d7c", "#98A4EB", "#5c7579", "#d59287", "#4db7cf", "#0d9937"]
-
-# Calculate response rate
+# Response Rate metrics
 total_apps = apps[apps.columns[0]].count()
 all_resp = ['Rejected', 'Bailed', 'Interviewing', 'Ghosted', 'On Hold', 'Denied', 'Offer']
 real_resp = ['Rejected', 'Bailed', 'Interviewing', 'Ghosted', 'On Hold', 'Offer']
 response_rate = sum(1 for app_stat in apps["Status"].dropna() if app_stat in all_resp)
 real_response_rate = sum(1 for app_stat in apps["Status"].dropna() if app_stat in real_resp)
+response_average = apps['Response Time (Days)'].dropna().mean()
+response_max = apps['Response Time (Days)'].dropna().max()
+response_max_company = apps.iloc[int(apps['Response Time (Days)'].dropna().idxmax()), 0]
+# Interview metrics
 num_interviews = sum(1 for app_stat in apps["Status"].dropna() if app_stat in real_resp)
 current_interviews = sum(1 for app_stat in apps["Status"].dropna() if app_stat in ["Interviewing"])
 sum_interviews = apps["Number of Interviews"].sum()
@@ -124,8 +127,8 @@ st.title("Job Application - Data Visualization")
 
 # Layer 1 Columns
 st.header("Graham Harris")
-st.text("Since I was laid off in April 2025, I've been hard at work applying to new roles. This project is a capstone project of all of the data I've collected showcasing my data visualization skills.")
-st.text("Example data is loaded on the public application - please ask for the master data source to see my actual application journey.")
+st.text("Since I was laid off in April 2025, I've been hard at work applying to new roles. This project is a capstone presentation of all of the data I've collected showcasing my data visualization skills.")
+st.text("Example data is loaded on the public application - please ask for the master data set to see my actual application journey.")
 
 # ---------------------------------------- CONTENTS
 st.write("#")
@@ -133,30 +136,32 @@ st.html("<hr style='border: 5px solid black; border-radius: 5px'>")
 st.header("Table of Contents")
 st.html(
     "<ol style='padding-left: 5%;'>"
-        "<li><a href='#data-aggregations'>Data Aggregations</a></li>"
+        "<li><a href='#data-summary'>Data Summary</a></li>"
         "<li><a href='#application-breakdown'>Application Breakdown</a></li>"
         "<li><a href='#interviews'>Interviews</a></li>"
         "<li><a href='#return-on-effort'>Return on Effort</a></li>"
     "</ol>"
 )
+st.text("For more information, my resume, or to see the real data set, please email me at grahamh1019@gmail.com.")
+st.text("Looking forward to hearing from you!")
 
 # ---------------------------------------- DATA AGG
 st.write("#")
 st.html("<hr style='border: 5px solid black; border-radius: 5px'>")
-st.header("Data Aggregations")
+st.header("Data Summary")
 
+# Dataframes
 col1, col2 = st.columns(2)
 with col1:
     st.text("Applications grouped by INDUSTRY:")
     # Display the DataFrame
     st.dataframe(industry_df, hide_index=True)
-
-# Metrics
 with col2:
     st.text("Applications grouped by ROLE TYPE:")
     # Display the DataFrame
     st.dataframe(role_df, hide_index=True)
 
+# Response data
 st.html("<hr>")
 st.subheader("Responses")
 matrix1, matrix2 = st.columns(2)
@@ -164,37 +169,32 @@ with matrix1:
     rate = str('{0:.4g}'.format((response_rate/total_apps)*100)) + "%"
     st.metric("Response Rate (including auto-denials):", rate)
     rate2 = str('{0:.4g}'.format((real_response_rate/total_apps)*100)) + "%"
-    st.metric("Real Response Rate (excluding auto-denials):", rate2)
+    st.metric("'Real' Response Rate (*excluding* auto-denials):", rate2)
+    resp_avg_format = str('{0:.3g} days'.format(response_average))
+    st.metric("Average time to respond (including auto-denials):", resp_avg_format)
+    st.metric("Longest time to respond:", '{0:.2g}'.format(response_max) + " days (" + response_max_company + ")")
 with matrix2:
     traction_rate = str('{0:.3g}'.format((current_interviews/last_four_weeks)*100)) + "%"
-    st.metric("% of applications currently in the interview phase:", traction_rate)  
+    st.metric("% of total applications currently in the interview phase:", traction_rate)  
 st.html("<hr>")
 
+# Company data
 st.subheader("Companies")
 matrix3, matrix4 = st.columns(2)
 with matrix3:
     st.metric("Total number of applications:", total_apps)
 with matrix4:
     st.metric("Number of UNIQUE companies:", unique_companies)
-st.html("<hr>")
-
-st.subheader("Interviews")
-matrix5, matrix6 = st.columns(2)
-with matrix5:
-    st.metric("Number of roles interviewed for:", num_interviews)
-with matrix6:
-    st.metric("Total interviews:", sum_interviews)
-st.text("For more information, my resume, or to see the original data set, please email me at grahamh1019@gmail.com. Looking forward to hearing from you!")
 
 # ---------------------------------------- APP DATA
 st.write("#")
 st.html("<hr style='border: 5px solid black; border-radius: 5px'>")
 st.header("Application Breakdown")
 
-next1, next2, next3 = st.columns(3)
+next1, next2 = st.columns(2, border=True)
 
 with next1:
-    st.text("Applications per WEEK:")
+    st.subheader("Applications per WEEK:")
     # Create the chart
     weekly = alt.Chart(weekly_df).mark_bar().encode(
         x=alt.X("Week:O", title="Week Number"),
@@ -202,9 +202,19 @@ with next1:
         color=alt.value("#db9abc")
     )
     st.altair_chart(weekly, use_container_width=True)
+    st.html("<hr>")
+
+    st.subheader("Applications by ROLE:")
+    # Create the chart
+    platform = alt.Chart(role_df).mark_bar().encode(
+        x=alt.X("Role Type:O", title="Role Type", sort=None),
+        y=alt.Y("Number of Applications:Q", title="# Applied To"),
+        color=alt.value("#98A4EB")
+    )
+    st.altair_chart(platform, use_container_width=True)
 
 with next2:
-    st.text("Applications per PLATFORM:")
+    st.subheader("Applications by PLATFORM:")
     # Create the chart
     platform = alt.Chart(platform_df).mark_bar().encode(
         x=alt.X("Platform:O", title="Platform", sort=None),
@@ -212,8 +222,9 @@ with next2:
         color=alt.value("#d59287")
     )
     st.altair_chart(platform, use_container_width=True)
+    st.html("<hr>")
 
-    st.text("Interviews by Week Applied:")
+    st.subheader("Interviews by WEEK APPLIED:")
     chart = alt.Chart(weekly_df).mark_bar().encode(
         x=alt.X('Week:O', title='Week Number'),
         y=alt.Y('Number of Interviews:Q', title='Total Interviews'),
@@ -223,23 +234,40 @@ with next2:
     st.altair_chart(chart, use_container_width=True)
     st.text("Note: This chart shows the number of interviews per week based on when the application was sent, not when the actual interview occured.")
 
-with next3:
-    st.text("Applications by ROLE:")
-    # Create the chart
-    platform = alt.Chart(role_df).mark_bar().encode(
-        x=alt.X("Role Type:O", title="Role Type", sort=None),
-        y=alt.Y("Number of Applications:Q", title="# Applied To"),
-        color=alt.value("#98A4EB")
-    )
-    st.altair_chart(platform, use_container_width=True)
-
 # ---------------------------------------- INTERVIEWS
 st.write("#")
 st.html("<hr style='border: 5px solid black; border-radius: 5px'>")
 st.header("Interviews")
 
+# Prelim data data
+st.subheader("By the numbers:")
+matrix5, matrix6 = st.columns(2)
+with matrix5:
+    st.metric("Number of roles interviewed for:", num_interviews)
+    st.metric("Average number of interviews per role:", apps['Number of Interviews'].dropna().mean())
+    st.metric("Median number of interviews per role:", apps['Number of Interviews'].dropna().median())
+with matrix6:
+    st.metric("Total interviews:", int(sum_interviews))
+    interview_max = apps['Number of Interviews'].dropna().max()
+    interview_max_company = apps.iloc[int(apps['Number of Interviews'].dropna().idxmax()), 0]
+    st.metric("Longest interview process:", '{0:.2g}'.format(interview_max) + " interviews (" + interview_max_company + ")")
+st.html("<hr>")
 
-interviews = pd.read_excel(data_file, sheet_name="Interviews")
+# Drop NA just in case
+st.subheader("Histogram of application response time:")
+df_clean = apps.dropna(subset=['Response Time (Days)'])
+# Optional filtering
+min_day = int(df_clean['Response Time (Days)'].min())
+max_day = int(df_clean['Response Time (Days)'].max())
+bin_size = st.slider("Select x-axis scaling (in days)", 1, 10, 3)
+# Histogram chart
+hist = alt.Chart(df_clean).mark_bar().encode(
+    alt.X("Response Time (Days):Q", bin=alt.Bin(step=bin_size), title="Response Time (Days)"),
+    y=alt.Y("count():Q", title="Number of Applications"),
+    tooltip=['count()']
+).interactive()
+st.altair_chart(hist)
+
 # Number of rounds
 int_round_df = interviews.groupby(['Round', 'Type of Interview', 'Location']).agg({
         'State': 'count',
@@ -273,23 +301,19 @@ int_type_df = interviews.groupby('Type of Interview').agg({
         'State': 'count'
     }).reset_index().sort_values("State", ascending=False)
     
-# CHARTS
-# Convert to datetime
+# Interview heatmap
 st.subheader("Heatmap of interviews:")
 cal1, cal2, cal3 = st.columns([1,4,1])
 with cal2:
     interviews['Date'] = pd.to_datetime(interviews['Date'], format='%d-%b-%Y')
-
     # Step 2: Count occurrences per day
     daily_counts = interviews['Date'].value_counts().reset_index()
     daily_counts.columns = ['date', 'count']
     daily_counts = daily_counts.sort_values('date')
-
     # Step 3: Add calendar fields
     daily_counts['day'] = daily_counts['date'].dt.dayofweek     # 0 = Monday
     daily_counts['week'] = daily_counts['date'].dt.isocalendar().week
     daily_counts['month'] = daily_counts['date'].dt.strftime('%B')
-
     # Step 4: Plot calendar-style heatmap
     heatmap = alt.Chart(daily_counts).mark_rect().encode(
         x=alt.X('week:O', title='Week Number'),
@@ -303,8 +327,9 @@ with cal2:
             tooltip=['date:T', 'count:Q']
         )
     st.altair_chart(heatmap, use_container_width=True)
+st.html("<hr>")
 
-# Rounds 1
+# Selectbox for interview stats
 st.subheader("Grouped by NUMBER OF ROUNDS:")
 color_field = st.selectbox(
     "Choose to color by:",
@@ -373,8 +398,7 @@ scatter = alt.Chart(filtered_data).mark_circle(size=60).encode(
     x=alt.X("Application Number:Q", title="Application Number"),
     y=alt.Y("Chance of Success:Q", title="Chance of Success"),
     color=alt.Color("Application Status:N", 
-                    title="Status"
-                    ),
+                    title="Status"),
     tooltip=["Application Number", "Company Name", "Application Status", "Chance of Success"]
 )
 # Display
@@ -383,8 +407,9 @@ scatterplot = st.altair_chart(scatter, use_container_width=True)
 more1, more2 = st.columns(2, border=True)
 
 with more1:
-    st.subheader("'Chance of Success' Definition")
-    st.text("""This is a measure of the likelihood of success, or the chance I think I have of getting an offer. High values indicate that I should be an ideal applicant to the position. Low values indicate that it might be a stretch for me to get the job. Each point is measured by estimating the effort for each: role, average salary, salary range (max - min salary), and industry.""")
+    st.markdown("""
+            **'Chance of Success' Definition**: 
+            This is a measure of the likelihood of success, or the chance I think I have of getting an offer. High values indicate that I should be an ideal applicant to the position. Low values indicate that it might be a stretch for me to get the job. Each point is measured by estimating the effort for each: role, average salary, salary range (max - min salary), and industry.""")
     st.text("Notes about the data:")
     st.html(
         "<ol style='padding-left: 5%'>" \
@@ -430,7 +455,9 @@ effort_plot = alt.Chart(filtered_data).mark_circle(size=60).encode(
 )
 # Display
 effort_scatterplot = st.altair_chart(effort_plot, use_container_width=True)
-st.text("""This is a measure of how much effort has been put into an application. High values indicate that a lot of effort has been put into an application and low values indicate low levels of effort was put in.  Each point is measured by estimating the effort for each: status (applied, interviewing, rejected, etc), platform, and number of interviews.""")
+st.markdown("""
+        **'Effort' Definition**: 
+        This is a measure of how much effort has been put into an application. High values indicate that a lot of effort has been put into an application and low values indicate low levels of effort was put in.  Each point is measured by estimating the effort for each: status (applied, interviewing, rejected, etc), platform, and number of interviews.""")
 st.text("Notes about the data:")
 st.html(
         "<ol style='padding-left: 5%'>" \
@@ -451,4 +478,9 @@ roe_plot = alt.Chart(filtered_data).mark_circle(size=60).encode(
 )
 # Display
 roe_scatterplot = st.altair_chart(roe_plot, use_container_width=True)
-st.text("""The return on investment, or in this case, return on effort (ROE). For example, if the ROE is 3, there would be a 3X return on the effort that I put into the application. Return on effort is qualitative and doesn't exactly capture the experience of an application. For example, getting an interview from an application does more than just reward effort - it signifies that something was right in the application (like resume, cover letter, experience, etc.) and validates the direction of future applications. In the end, the only thing that really matters is getting an offer, so offers are weighted at a 10X value.""")
+st.markdown("""
+        **'Return on Effort' Definition**: 
+        The return on investment, or in this case, return on effort (ROE). For example, if the ROE is 3, there would be a 3X return on the effort that I put into the application. Return on effort is qualitative and doesn't exactly capture the experience of an application. For example, getting an interview from an application does more than just reward effort - it signifies that something was right in the application (like resume, cover letter, experience, etc.) and validates the direction of future applications. In the end, the only thing that really matters is getting an offer, so offers are weighted at a 10X value.""")
+
+st.write("#")
+st.html("<a href='#job-application-data-visualization'>Return to Top</a>")
