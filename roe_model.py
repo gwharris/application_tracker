@@ -172,7 +172,7 @@ with matrix1:
     st.metric("'Real' Response Rate (*excluding* auto-denials):", rate2)
     resp_avg_format = str('{0:.3g} days'.format(response_average))
     st.metric("Average time to respond (including auto-denials):", resp_avg_format)
-    st.metric("Longest time to respond:", '{0:.2g}'.format(response_max) + " days (" + response_max_company + ")")
+    st.metric("Longest time to respond:", '{0:.3g}'.format(response_max) + " days (" + response_max_company + ")")
 with matrix2:
     traction_rate = str('{0:.3g}'.format((current_interviews/last_four_weeks)*100)) + "%"
     st.metric("% of total applications currently in the interview phase:", traction_rate)  
@@ -398,14 +398,14 @@ scatter = alt.Chart(filtered_data).mark_circle(size=60).encode(
     x=alt.X("Application Number:Q", title="Application Number"),
     y=alt.Y("Chance of Success:Q", title="Chance of Success"),
     color=alt.Color("Application Status:N", 
-                    title="Status"),
+                    title="Status",
+                    scale=alt.Scale(scheme='turbo')),
     tooltip=["Application Number", "Company Name", "Application Status", "Chance of Success"]
 )
 # Display
 scatterplot = st.altair_chart(scatter, use_container_width=True)
 
 more1, more2 = st.columns(2, border=True)
-
 with more1:
     st.markdown("""
             **'Chance of Success' Definition**: 
@@ -431,7 +431,6 @@ with more1:
     st.metric("Accuracy of the chance of success metric:", 
               f"{accuracy:.2f}%")
     st.text("This means that applications with more than a 50% chance of success have a " + f"{(accuracy):.2f}%" + " higher chance of leading to a response than applications below 50% chance.")
-    
 with more2:
     # Status total
     st.text("Applications by status:")
@@ -439,7 +438,8 @@ with more2:
         x=alt.X("Status:O", title="Status", sort=None),
         y=alt.Y("Applications In Status:Q", title="# In Status"),
         color=alt.Color("Status:N", 
-                title="Status")
+                title="Status",
+                scale=alt.Scale(scheme='turbo'))
     )
     st.altair_chart(status, use_container_width=True)
 
@@ -449,8 +449,8 @@ effort_plot = alt.Chart(filtered_data).mark_circle(size=60).encode(
     x=alt.X("Application Number:Q", title="Application Number"),
     y=alt.Y("Application Effort:Q", title="Application Effort"),
     color=alt.Color("Application Status:N", 
-                    title="Status"
-                    ),
+                    title="Status",
+                    scale=alt.Scale(scheme='turbo')),
     tooltip=["Application Number", "Company Name", "Application Status", "Application Effort"]
 )
 # Display
@@ -472,8 +472,8 @@ roe_plot = alt.Chart(filtered_data).mark_circle(size=60).encode(
     x=alt.X("Application Number:Q", title="Application Number"),
     y=alt.Y("ROE:Q", title="Return on Effort"),
     color=alt.Color("Application Status:N", 
-                    title="Status"
-                    ),
+                    title="Status",
+                    scale=alt.Scale(scheme='turbo')),
     tooltip=["Application Number", "Company Name", "Application Status", "ROE"]
 )
 # Display
