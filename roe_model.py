@@ -29,22 +29,29 @@ interviews = pd.read_excel(data_file, sheet_name="Interviews")
 
 # ---------------------------------------- CONSTANTS
 
-# List of statuses
-status_order = pd.unique(apps["Status"].dropna())
-# Response Rate metrics
+# Number of apps
 total_apps = apps[apps.columns[0]].count()
-all_resp = ['Rejected', 'Bailed', 'Interviewing', 'Ghosted', 'On Hold', 'Denied', 'Offer']
-real_resp = ['Rejected', 'Bailed', 'Interviewing', 'Ghosted', 'On Hold', 'Offer']
+
+# List of ALL statuses
+status_order = pd.unique(apps["Status"].dropna())
+# Lists of Positive response stats
+all_resp = ['Rejected', 'Bailed', 'Interviewing', 'Ghosted', 'On Hold', 'Denied', 'Offer'] # Denied is an auto response
+real_resp = ['Rejected', 'Bailed', 'Interviewing', 'Ghosted', 'On Hold', 'Offer'] # So real != Denied
+
+# Response rate calcs
 response_rate = sum(1 for app_stat in apps["Status"].dropna() if app_stat in all_resp)
 real_response_rate = sum(1 for app_stat in apps["Status"].dropna() if app_stat in real_resp)
+
+# Response time
 response_average = apps['Response Time (Days)'].dropna().mean()
+real_response_average = apps[apps['Status'].isin(real_resp)]['Response Time (Days)'].dropna().mean()
 response_max = apps['Response Time (Days)'].dropna().max()
 response_max_company = apps.iloc[int(apps['Response Time (Days)'].dropna().idxmax()), 0]
+
 # Interview metrics
 num_interviews = sum(1 for app_stat in apps["Status"].dropna() if app_stat in real_resp)
 current_interviews = sum(1 for app_stat in apps["Status"].dropna() if app_stat in ["Interviewing"])
 sum_interviews = apps["Number of Interviews"].sum()
-unique_companies = len(pd.unique(apps['Company']))
 avg_salary = (apps['Salary Min (Thousands)'].mean() + apps['Salary Max (Thousands)'].mean()) / 2
 
 # ---------------------------------------- FUNCTIONS
@@ -59,67 +66,60 @@ def convert_to_st(df: pd.DataFrame, x: str, y: str):
     })
     return new_df
 
-# Function that shows how much I'm worth based on salary
-def likelihood(salary):
-    baseline = 115
-    decay_rate = 12
-    min_prob = 0.30
-    max_prob = 0.95
-    prob = np.where(
-        salary <= baseline,
-        max_prob,
-        min_prob + (max_prob - min_prob) * np.exp(-(salary - baseline) / decay_rate)
-    )
-    return prob
+# Used in group by dataframes
+def count_status(status_list):
+    return lambda x: x.isin(status_list).sum()
+
+# Returns a df in teh right formatting for apps
+def groupby_percents(sheet, col_name):
+    rdf = sheet.groupby(col_name).agg(
+        Applications=('Status', 'count'),
+        Companies=('Company', pd.Series.nunique),
+        Interviews=('Number of Interviews', 'sum'),
+        Salary_Min=('Salary Min (Thousands)', 'mean'),
+        Salary_Max=('Salary Max (Thousands)', 'mean'),
+        All_Positive=('Status', count_status(all_resp)),
+        Real_Positive=('Status', count_status(real_resp))
+    ).reset_index().sort_values("Applications", ascending=False)
+    # Create response % columns
+    rdf['Total Responses'] = rdf['All_Positive'] / rdf['Applications'] * 100
+    rdf['Total Responses'] = rdf['Total Responses'].apply('{:.1f}%'.format)
+    rdf['Real Responses'] = rdf['Real_Positive'] / rdf['Applications'] * 100
+    rdf['Real Responses'] = rdf['Real Responses'].apply('{:.1f}%'.format)
+    rdf['Salary_Min'] = rdf['Salary_Min'].apply('${:.2f}'.format)
+    rdf['Salary_Max'] = rdf['Salary_Max'].apply('${:.2f}'.format)
+    # Drop extra columns
+    rdf = rdf.drop('All_Positive', axis=1)
+    rdf = rdf.drop('Real_Positive', axis=1)
+    rdf = rdf.rename(columns={
+        'Applications': '# of Applications',
+        'Companies': '# of Companies',
+        'Salary_Min': 'Avg Min',
+        'Salary_Max': 'Avg Max',
+    })
+    return rdf
+
+def groupby_smaller(sheet, count, col_name, rename, sort):
+    rdf = sheet.groupby(col_name).agg({
+        count: 'count',
+        'Number of Interviews': 'sum'
+    }).rename(columns={
+        count: rename
+    }).reset_index().sort_values(sort, ascending=False)
+    return rdf
 
 # ---------------------------------------- GROUP BYS
 # Dataframes from the Applications page that are grouped by category
 
-industry_df = apps.groupby('Industry').agg({
-        'Status': 'count',
-        'Number of Interviews': 'sum',
-        'Salary Min (Thousands)': 'mean',
-        'Salary Max (Thousands)': 'mean'
-    }).rename(columns={
-        'Status': 'Number of Applications',
-        'Number of Interviews': '# Interviews',
-        'Salary Min (Thousands)': 'Avg Min Salary (kUSD)',
-        'Salary Max (Thousands)': 'Avg Max Salary (kUSD)'
-    }).reset_index().sort_values("Number of Applications", ascending=False)
+industry_df = groupby_percents(apps, "Industry")
+role_df = groupby_percents(apps, "Role Type")
 
-role_df = apps.groupby('Role Type').agg({
-        'Status': 'count',
-        'Number of Interviews': 'sum',
-        'Salary Min (Thousands)': 'mean',
-        'Salary Max (Thousands)': 'mean'
-    }).rename(columns={
-        'Status': 'Number of Applications',
-        'Number of Interviews': '# Interviews',
-        'Salary Min (Thousands)': 'Avg Min Salary (kUSD)',
-        'Salary Max (Thousands)': 'Avg Max Salary (kUSD)'
-    }).reset_index().sort_values("Number of Applications", ascending=False)
-
-weekly_df = apps.groupby('Week').agg({
-        'Status': 'count',
-        'Number of Interviews': 'sum'
-    }).rename(columns={
-        'Status': 'Applications Per Week'
-    }).reset_index().sort_values("Week", ascending=False)
+weekly_df = groupby_smaller(apps, "Status", "Week", "Applications Per Week", "Week")
 weekly_df = weekly_df.drop(0) # Drop the -14 values
 last_four_weeks = weekly_df['Applications Per Week'].head(4).sum()
 
-platform_df = apps.groupby('Platform').agg({
-        'Status': 'count',
-    }).rename(columns={
-        'Status': 'Applications Per Platform'
-    }).reset_index().sort_values("Applications Per Platform", ascending=False)
-
-status_df = apps.groupby('Status').agg({
-        'Role Type': 'count',
-        'Number of Interviews': 'sum'
-    }).rename(columns={
-        'Role Type': 'Applications In Status'
-    }).reset_index().sort_values("Applications In Status", ascending=False)
+platform_df = groupby_smaller(apps, "Status", "Platform", "Applications Per Platform", "Applications Per Platform")
+status_df = groupby_smaller(apps, "Role Type", "Role Type", "Applications In Status", "Applications In Status")
 
 # ---------------------------------------- HEADER
 
@@ -134,14 +134,12 @@ st.text("Example data is loaded on the public application - please ask for the m
 st.write("#")
 st.html("<hr style='border: 5px solid black; border-radius: 5px'>")
 st.header("Table of Contents")
-st.html(
-    "<ol style='padding-left: 5%;'>"
+st.html("<ol style='padding-left: 5%;'>"
         "<li><a href='#data-summary'>Data Summary</a></li>"
         "<li><a href='#application-breakdown'>Application Breakdown</a></li>"
         "<li><a href='#interviews'>Interviews</a></li>"
         "<li><a href='#return-on-effort'>Return on Effort</a></li>"
-    "</ol>"
-)
+    "</ol>")
 st.text("For more information, my resume, or to see the real data set, please email me at grahamh1019@gmail.com.")
 st.text("Looking forward to hearing from you!")
 
@@ -154,11 +152,9 @@ st.header("Data Summary")
 col1, col2 = st.columns(2)
 with col1:
     st.text("Applications grouped by INDUSTRY:")
-    # Display the DataFrame
     st.dataframe(industry_df, hide_index=True)
 with col2:
     st.text("Applications grouped by ROLE TYPE:")
-    # Display the DataFrame
     st.dataframe(role_df, hide_index=True)
 
 # Response data
@@ -167,15 +163,32 @@ st.subheader("Responses")
 matrix1, matrix2 = st.columns(2)
 with matrix1:
     rate = str('{0:.4g}'.format((response_rate/total_apps)*100)) + "%"
-    st.metric("Response Rate (including auto-denials):", rate)
+    st.metric("Total Response Rate (including auto-denials):", rate)
     rate2 = str('{0:.4g}'.format((real_response_rate/total_apps)*100)) + "%"
-    st.metric("'Real' Response Rate (*excluding* auto-denials):", rate2)
+    st.metric("Total 'Real' Response Rate (*excluding* auto-denials):", rate2)
     resp_avg_format = str('{0:.3g} days'.format(response_average))
     st.metric("Average time to respond (including auto-denials):", resp_avg_format)
-    st.metric("Longest time to respond:", '{0:.3g}'.format(response_max) + " days (" + response_max_company + ")")
+    real_resp_avg_format = str('{0:.3g} days'.format(real_response_average))
+    st.metric("Real average time to respond (*excluding* auto-denials):", real_resp_avg_format)
 with matrix2:
     traction_rate = str('{0:.3g}'.format((current_interviews/last_four_weeks)*100)) + "%"
     st.metric("% of total applications currently in the interview phase:", traction_rate)  
+    st.metric("Longest time to respond:", '{0:.3g}'.format(response_max) + " days (" + response_max_company + ")")
+
+# Histogram of response time
+st.subheader("Histogram of application response time:")
+df_clean = apps.dropna(subset=['Response Time (Days)'])
+# Optional filtering
+min_day = int(df_clean['Response Time (Days)'].min())
+max_day = int(df_clean['Response Time (Days)'].max())
+bin_size = st.slider("Select x-axis scaling (in days)", 1, 10, 3)
+# Histogram chart
+hist = alt.Chart(df_clean).mark_bar().encode(
+    alt.X("Response Time (Days):Q", bin=alt.Bin(step=bin_size), title="Response Time (Days)"),
+    y=alt.Y("count():Q", title="Number of Applications"),
+    tooltip=['count()']
+).interactive()
+st.altair_chart(hist)
 st.html("<hr>")
 
 # Company data
@@ -184,7 +197,7 @@ matrix3, matrix4 = st.columns(2)
 with matrix3:
     st.metric("Total number of applications:", total_apps)
 with matrix4:
-    st.metric("Number of UNIQUE companies:", unique_companies)
+    st.metric("Number of UNIQUE companies:", len(pd.unique(apps['Company'])))
 
 # ---------------------------------------- APP DATA
 st.write("#")
@@ -208,7 +221,7 @@ with next1:
     # Create the chart
     platform = alt.Chart(role_df).mark_bar().encode(
         x=alt.X("Role Type:O", title="Role Type", sort=None),
-        y=alt.Y("Number of Applications:Q", title="# Applied To"),
+        y=alt.Y("# of Applications:Q", title="# Applied To"),
         color=alt.value("#98A4EB")
     )
     st.altair_chart(platform, use_container_width=True)
@@ -232,7 +245,7 @@ with next2:
         color=alt.value("#5c7579")
     )
     st.altair_chart(chart, use_container_width=True)
-    st.text("Note: This chart shows the number of interviews per week based on when the application was sent, not when the actual interview occured.")
+    st.text("Note: This chart shows the number of interviews per week based on when the application was sent, not when the actual interview occured. This helps show how successful a resume is on any given week and how changes to a resume impact interviews.")
 
 # ---------------------------------------- INTERVIEWS
 st.write("#")
@@ -244,7 +257,7 @@ st.subheader("By the numbers:")
 matrix5, matrix6 = st.columns(2)
 with matrix5:
     st.metric("Number of roles interviewed for:", num_interviews)
-    st.metric("Average number of interviews per role:", apps['Number of Interviews'].dropna().mean())
+    st.metric("Average number of interviews per role:", '{0:.3g}'.format(apps['Number of Interviews'].dropna().mean()))
     st.metric("Median number of interviews per role:", apps['Number of Interviews'].dropna().median())
 with matrix6:
     st.metric("Total interviews:", int(sum_interviews))
@@ -252,21 +265,6 @@ with matrix6:
     interview_max_company = apps.iloc[int(apps['Number of Interviews'].dropna().idxmax()), 0]
     st.metric("Longest interview process:", '{0:.2g}'.format(interview_max) + " interviews (" + interview_max_company + ")")
 st.html("<hr>")
-
-# Drop NA just in case
-st.subheader("Histogram of application response time:")
-df_clean = apps.dropna(subset=['Response Time (Days)'])
-# Optional filtering
-min_day = int(df_clean['Response Time (Days)'].min())
-max_day = int(df_clean['Response Time (Days)'].max())
-bin_size = st.slider("Select x-axis scaling (in days)", 1, 10, 3)
-# Histogram chart
-hist = alt.Chart(df_clean).mark_bar().encode(
-    alt.X("Response Time (Days):Q", bin=alt.Bin(step=bin_size), title="Response Time (Days)"),
-    y=alt.Y("count():Q", title="Number of Applications"),
-    tooltip=['count()']
-).interactive()
-st.altair_chart(hist)
 
 # Number of rounds
 int_round_df = interviews.groupby(['Round', 'Type of Interview', 'Location']).agg({
@@ -430,7 +428,7 @@ with more1:
               f"{positive_chance:.2f}%")
     st.metric("Accuracy of the chance of success metric:", 
               f"{accuracy:.2f}%")
-    st.text("This means that applications with more than a 50% chance of success have a " + f"{(accuracy):.2f}%" + " higher chance of leading to a response than applications below 50% chance.")
+    st.text("This means that applications with more than a 50% chance of success are " + f"{(accuracy * 2/100):.2f}X" + " more likely to result in a response than applications below 50% chance.")
 with more2:
     # Status total
     st.text("Applications by status:")
