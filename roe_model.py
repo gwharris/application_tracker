@@ -119,7 +119,7 @@ weekly_df = weekly_df.drop(0) # Drop the -14 values
 last_four_weeks = weekly_df['Applications Per Week'].head(4).sum()
 
 platform_df = groupby_smaller(apps, "Status", "Platform", "Applications Per Platform", "Applications Per Platform")
-status_df = groupby_smaller(apps, "Role Type", "Role Type", "Applications In Status", "Applications In Status")
+status_df = groupby_smaller(apps, "Role Type", "Status", "Applications In Status", "Applications In Status")
 
 # ---------------------------------------- HEADER
 
@@ -153,6 +153,7 @@ col1, col2 = st.columns(2)
 with col1:
     st.text("Applications grouped by INDUSTRY:")
     st.dataframe(industry_df, hide_index=True)
+    st.text("In the master data, the industry 'Recruiter' represents listings posted by a recruiting agency on behalf of another company. The overwhelming majority of postings like these are from financial/investment banking firms. The response rate for these kinds of listings is abysmal.")
 with col2:
     st.text("Applications grouped by ROLE TYPE:")
     st.dataframe(role_df, hide_index=True)
