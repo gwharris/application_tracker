@@ -30,17 +30,22 @@ interviews = pd.read_excel(data_file, sheet_name="Interviews")
 # ---------------------------------------- CONSTANTS
 
 # Number of apps
-total_apps = apps[apps.columns[0]].count()
+total_apps = apps[apps.columns[0]].dropna().count()
 
 # List of ALL statuses
 status_order = pd.unique(apps["Status"].dropna())
 # Lists of Positive response stats
-all_resp = ['Rejected', 'Bailed', 'Interviewing', 'Ghosted', 'On Hold', 'Denied', 'Offer'] # Denied is an auto response
-real_resp = ['Rejected', 'Bailed', 'Interviewing', 'Ghosted', 'On Hold', 'Offer'] # So real != Denied
+all_resp = ['Rejected', 'Bailed', 'Interviewing', 'Ghosted', 
+            'On Hold', 'Denied', 'Viewed', 'Offer'] # Denied and Viewed are auto responses
+real_resp = ['Rejected', 'Bailed', 'Interviewing', 'Ghosted', 'On Hold', 'Offer'] # So real != Denied, Viewed
+
+# Apps DF where Pending is dropped
+apps_nopend = apps[apps["Status"].str.contains("Pending")==False]
+total_nopend_apps = apps_nopend[apps_nopend.columns[0]].dropna().count()
 
 # Response rate calcs
-response_rate = sum(1 for app_stat in apps["Status"].dropna() if app_stat in all_resp)
-real_response_rate = sum(1 for app_stat in apps["Status"].dropna() if app_stat in real_resp)
+response_rate = sum(1 for app_stat in apps_nopend["Status"].dropna() if app_stat in all_resp)
+real_response_rate = sum(1 for app_stat in apps_nopend["Status"].dropna() if app_stat in real_resp)
 
 # Response time
 response_average = apps['Response Time (Days)'].dropna().mean()
@@ -49,9 +54,9 @@ response_max = apps['Response Time (Days)'].dropna().max()
 response_max_company = apps.iloc[int(apps['Response Time (Days)'].dropna().idxmax()), 0]
 
 # Interview metrics
-num_interviews = sum(1 for app_stat in apps["Status"].dropna() if app_stat in real_resp)
-current_interviews = sum(1 for app_stat in apps["Status"].dropna() if app_stat in ["Interviewing"])
-sum_interviews = apps["Number of Interviews"].sum()
+companies_interviewed_at = sum(1 for app_stat in apps["Status"].dropna() if app_stat in real_resp)
+currently_interviewing = sum(1 for app_stat in apps["Status"].dropna() if app_stat in ["Interviewing"])
+sum_interviews = interviews[interviews.columns[0]].dropna().count()
 avg_salary = (apps['Salary Min (Thousands)'].mean() + apps['Salary Max (Thousands)'].mean()) / 2
 
 # ---------------------------------------- FUNCTIONS
@@ -99,6 +104,7 @@ def groupby_percents(sheet, col_name):
     })
     return rdf
 
+# For DFs that need less groupby fields
 def groupby_smaller(sheet, count, col_name, rename, sort):
     rdf = sheet.groupby(col_name).agg({
         count: 'count',
@@ -161,18 +167,19 @@ with col2:
 # Response data
 st.html("<hr>")
 st.subheader("Responses")
+st.text("'Pending' applications are not considered in response metrics to keep data historical and not current.")
 matrix1, matrix2 = st.columns(2)
 with matrix1:
-    rate = str('{0:.4g}'.format((response_rate/total_apps)*100)) + "%"
-    st.metric("Total Response Rate (including auto-denials):", rate)
-    rate2 = str('{0:.4g}'.format((real_response_rate/total_apps)*100)) + "%"
-    st.metric("Total 'Real' Response Rate (*excluding* auto-denials):", rate2)
+    all_resp_rate = str('{0:.4g}'.format((response_rate/total_apps)*100)) + "%"
+    st.metric("Total Response Rate (including auto-denials):", all_resp_rate)
+    real_resp_rate = str('{0:.4g}'.format((real_response_rate/total_apps)*100)) + "%"
+    st.metric("Total 'Real' Response Rate (*excluding* auto-denials):", real_resp_rate)
     resp_avg_format = str('{0:.3g} days'.format(response_average))
     st.metric("Average time to respond (including auto-denials):", resp_avg_format)
     real_resp_avg_format = str('{0:.3g} days'.format(real_response_average))
     st.metric("Real average time to respond (*excluding* auto-denials):", real_resp_avg_format)
 with matrix2:
-    traction_rate = str('{0:.3g}'.format((current_interviews/last_four_weeks)*100)) + "%"
+    traction_rate = str('{0:.3g}'.format((currently_interviewing/last_four_weeks)*100)) + "%"
     st.metric("% of total applications currently in the interview phase:", traction_rate)  
     st.metric("Longest time to respond:", '{0:.3g}'.format(response_max) + " days (" + response_max_company + ")")
 
@@ -187,7 +194,7 @@ bin_size = st.slider("Select x-axis scaling (in days)", 1, 10, 3)
 hist = alt.Chart(df_clean).mark_bar().encode(
     alt.X("Response Time (Days):Q", bin=alt.Bin(step=bin_size), title="Response Time (Days)"),
     y=alt.Y("count():Q", title="Number of Applications"),
-    tooltip=['count()']
+    tooltip=['count()'],
 ).interactive()
 st.altair_chart(hist)
 st.html("<hr>")
@@ -247,6 +254,7 @@ with next2:
     )
     st.altair_chart(chart, use_container_width=True)
     st.text("Note: This chart shows the number of interviews per week based on when the application was sent, not when the actual interview occured. This helps show how successful a resume is on any given week and how changes to a resume impact interviews.")
+    st.text("There's usually a 2-3 week lag time in getting interviews due to response time turnaround.")
 
 # ---------------------------------------- INTERVIEWS
 st.write("#")
@@ -257,7 +265,7 @@ st.header("Interviews")
 st.subheader("By the numbers:")
 matrix5, matrix6 = st.columns(2)
 with matrix5:
-    st.metric("Number of roles interviewed for:", num_interviews)
+    st.metric("Number of roles interviewed for:", companies_interviewed_at)
     st.metric("Average number of interviews per role:", '{0:.3g}'.format(apps['Number of Interviews'].dropna().mean()))
     st.metric("Median number of interviews per role:", apps['Number of Interviews'].dropna().median())
 with matrix6:
@@ -329,13 +337,14 @@ with cal2:
 st.html("<hr>")
 
 # Selectbox for interview stats
-st.subheader("Grouped by NUMBER OF ROUNDS:")
+st.subheader("Breakdown of Interviews")
 color_field = st.selectbox(
     "Choose to color by:",
     options=["Type of Interview", "Location"]
     )
 r1, r2 = st.columns(2, border=True)
 with r1:
+    st.subheader("Grouped by NUMBER OF ROUNDS:")
     round = alt.Chart(int_round_df).mark_bar().encode(
         x=alt.X("Round:O", title="Interview Round"),
         y=alt.Y("State:Q", title="Count"),
@@ -343,34 +352,32 @@ with r1:
     )
     st.altair_chart(round, use_container_width=True)
 with r2:
-    st.write("###")
-    # Rounds line chart
-    roundp = alt.Chart(just_round_df).mark_line(color='#206fb2').encode(
-        x=alt.X("Round:O", title="Interview Round"),
-        y=alt.Y("Performance:Q", title="Rating Performance & Experience")
-    )
-    rounde = alt.Chart(just_round_df).mark_line(color='#a8cee5').encode(
-        x=alt.X("Round:O", title="Interview Round"),
-        y=alt.Y("Experience:Q", title="")
-    )
-    layered_chart = alt.layer(roundp, rounde)
-    st.altair_chart(layered_chart)  # or use layered_chart
-
-    # Role
-
-st.subheader("Grouped by ROLE TYPE:")
-r1, r2 = st.columns(2, border=True)
-with r1:
+    st.subheader("Grouped by ROLE TYPE:")
     role = alt.Chart(int_role_df).mark_bar().encode(
         x=alt.X("Role Type:O", title="Role Type"),
         y=alt.Y("State:Q", title="Count"),
         color=alt.Color(f'{color_field}:N', title=color_field, scale=alt.Scale(scheme='blueorange')),
     )
     st.altair_chart(role, use_container_width=True)
-with r2:
-    st.write("###")
+
+st.subheader("Breakdown By (Perceived) Performance")
+st.text("Performance is how well I feel I did in the interview. Experience is how much I enjoyed the interview/how well I thought the experience of the interview was conducted. Both are rated on a 1-5 scale where 5 is the max and 1 is the min.")
+r1, r2 = st.columns(2)
+with r1:
     # Rounds line chart
-    st.bar_chart(just_role_df, x="Role Type", y=['Experience', 'Performance'], stack=False)
+    roundp = alt.Chart(just_round_df).mark_line(color='#a8cee5').encode(
+        x=alt.X("Round:O", title="Interview Round"),
+        y=alt.Y("Performance:Q", title="Performance")
+    )
+    rounde = alt.Chart(just_round_df).mark_line(color='#206fb2').encode(
+        x=alt.X("Round:O", title="Interview Round"),
+        y=alt.Y("Experience:Q", title="Experience")
+    )
+    layered_chart = alt.layer(rounde, roundp)
+    st.altair_chart(layered_chart)  # or use layered_chart
+with r2:
+    # Rounds line chart
+    st.bar_chart(just_role_df, x="Role Type", y=['Performance', 'Experience'], stack=False)
 
 # ---------------------------------------- ROE
 st.write("#")
@@ -409,11 +416,12 @@ with more1:
     st.markdown("""
             **'Chance of Success' Definition**: 
             This is a measure of the likelihood of success, or the chance I think I have of getting an offer. High values indicate that I should be an ideal applicant to the position. Low values indicate that it might be a stretch for me to get the job. Each point is measured by estimating the effort for each: role, average salary, salary range (max - min salary), and industry.""")
-    st.text("Notes about the data:")
+    st.text("Notes about the metric:")
     st.html(
         "<ol style='padding-left: 5%'>" \
-        "<li>Roles that have an exact '0.5' chance of success did not have a salary listed on the job posting.</li>" \
-        "<li>The salary range is a confidence score. When companies have narrow salary ranges (IE 80-90k has a 10k range) the company likely has a set expectation for the role. If the range is extremely high (IE $100k or more) then the role seems ambiguous and it's not clear how the company is hiring or what a realistic salary is, and they may even be hiring for multiple levels of experience.</li>" \
+            "<li>Roles that have an exact '0.5' chance of success did not have a salary listed on the job posting.</li>" \
+            "<li>The salary range is a confidence score. When companies have narrow salary ranges (IE 80-90k has a 10k range) the company likely has a set expectation for the role. If the range is extremely high (IE $100k or more) then the role seems ambiguous and it's not clear how the company is hiring or what a realistic salary is, and they may even be hiring for multiple levels of experience.</li>" \
+            "<li>In the master data set, most of the roles I apply to fall below 50% success. That's okay - I'm trying to be ambitious with the process and am applying to roles that are outside my comfort zone/experience.</li>" \
         "</ol>"
     )
 
@@ -424,7 +432,7 @@ with more1:
     total_accuracy = real_response_rate/total_apps
     accuracy = (positive_chance-total_accuracy)/total_accuracy-100
     st.metric("Real response rate (exluding auto-denials):", 
-              rate2)
+              f"{real_resp_rate:.2f}%")
     st.metric("Response rate where the chance of success is above 50%:", 
               f"{positive_chance:.2f}%")
     st.metric("Accuracy of the chance of success metric:", 
@@ -441,6 +449,13 @@ with more2:
                 scale=alt.Scale(scheme='turbo'))
     )
     st.altair_chart(status, use_container_width=True)
+    st.text("Notes about application status:")
+    st.html(
+        "<ol style='padding-left: 5%'>" \
+            "<li>The 'Viewed' status in the master data is exclusive to LinkedIn applications. LinkedIn sends an email notification when companies view or download resumes. If the company does not respond, the application is left in the 'Viewed' status.</li>" \
+            "<li>The 'Bailed' status means that I decided to no longer pursue the application for a number of reasons, including: feeling like I was being scammed, the interviewers did not impress me, or the role sounded like a bad fit after learning more information.</li>" \
+        "</ol>"
+    )
 
 # Scatterplot
 st.subheader('Application Effort')
