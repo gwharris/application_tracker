@@ -4,3 +4,5 @@ matplotlib
 altair
 numpy
 openpyxl
+streamlit_vertical_slider
+streamlit_toggle

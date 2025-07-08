@@ -1,11 +1,11 @@
 
 import pandas as pd
 import streamlit as st
-import matplotlib.pyplot as plt
 import altair as alt
 import os
-import numpy as np
 import openpyxl
+from  streamlit_vertical_slider import vertical_slider 
+import streamlit_toggle
 
 # Wide mode
 st.set_page_config(layout="wide", page_title="Application Data")
@@ -44,20 +44,19 @@ apps_nopend = apps[apps["Status"].str.contains("Pending")==False]
 total_nopend_apps = apps_nopend[apps_nopend.columns[0]].dropna().count()
 
 # Response rate calcs
-response_rate = sum(1 for app_stat in apps_nopend["Status"].dropna() if app_stat in all_resp)
-real_response_rate = sum(1 for app_stat in apps_nopend["Status"].dropna() if app_stat in real_resp)
+response_number = sum(1 for app_stat in apps_nopend["Status"].dropna() if app_stat in all_resp)
+real_response_number = sum(1 for app_stat in apps_nopend["Status"].dropna() if app_stat in real_resp)
 
-# Response time
+# Response time (agnostic of Pending since response time means they had to respond)
 response_average = apps['Response Time (Days)'].dropna().mean()
 real_response_average = apps[apps['Status'].isin(real_resp)]['Response Time (Days)'].dropna().mean()
-response_max = apps['Response Time (Days)'].dropna().max()
-response_max_company = apps.iloc[int(apps['Response Time (Days)'].dropna().idxmax()), 0]
+longest_response = apps['Response Time (Days)'].dropna().max()
+longest_response_company = apps.iloc[int(apps['Response Time (Days)'].dropna().idxmax()), 0]
 
 # Interview metrics
-companies_interviewed_at = sum(1 for app_stat in apps["Status"].dropna() if app_stat in real_resp)
+num_interviewed_at = sum(1 for app_stat in apps["Status"].dropna() if app_stat in real_resp)
 currently_interviewing = sum(1 for app_stat in apps["Status"].dropna() if app_stat in ["Interviewing"])
-sum_interviews = interviews[interviews.columns[0]].dropna().count()
-avg_salary = (apps['Salary Min (Thousands)'].mean() + apps['Salary Max (Thousands)'].mean()) / 2
+sum_interviews = interviews[interviews.columns[0]].dropna().count() # NOT sum of apps interview column cause duplicates
 
 # ---------------------------------------- FUNCTIONS
 
@@ -135,6 +134,16 @@ st.title("Job Application - Data Visualization")
 st.header("Graham Harris")
 st.text("Since I was laid off in April 2025, I've been hard at work applying to new roles. This project is a capstone presentation of all of the data I've collected showcasing my data visualization skills.")
 st.text("Example data is loaded on the public application - please ask for the master data set to see my actual application journey.")
+st.text("Choose the colors for the graphs:")
+c1, c2, c3, c4 = st.columns(4)
+with c1:
+    color1 = st.color_picker("Color 1", "#7D984B")
+with c2:
+    color2 = st.color_picker("Color 2:", "#BBD38D")
+with c3:
+    color3 = st.color_picker("Color 3", "#74A6C4")
+with c4:
+    color4 = st.color_picker("Color 4:", "#3F6A85")
 
 # ---------------------------------------- CONTENTS
 st.write("#")
@@ -155,7 +164,7 @@ st.html("<hr style='border: 5px solid black; border-radius: 5px'>")
 st.header("Data Summary")
 
 # Dataframes
-col1, col2 = st.columns(2)
+col1, col2 = st.columns(2, gap='large')
 with col1:
     st.text("Applications grouped by INDUSTRY:")
     st.dataframe(industry_df, hide_index=True)
@@ -170,10 +179,10 @@ st.subheader("Responses")
 st.text("'Pending' applications are not considered in response metrics to keep data historical and not current.")
 matrix1, matrix2 = st.columns(2)
 with matrix1:
-    all_resp_rate = str('{0:.4g}'.format((response_rate/total_apps)*100)) + "%"
-    st.metric("Total Response Rate (including auto-denials):", all_resp_rate)
-    real_resp_rate = str('{0:.4g}'.format((real_response_rate/total_apps)*100)) + "%"
-    st.metric("Total 'Real' Response Rate (*excluding* auto-denials):", real_resp_rate)
+    all_response_rate = str('{0:.4g}'.format((response_number/total_apps)*100)) + "%"
+    st.metric("Total Response Rate (including auto-denials):", all_response_rate)
+    real_response_rate = str('{0:.4g}'.format((real_response_number/total_apps)*100)) + "%"
+    st.metric("Total 'Real' Response Rate (*excluding* auto-denials):", real_response_rate)
     resp_avg_format = str('{0:.3g} days'.format(response_average))
     st.metric("Average time to respond (including auto-denials):", resp_avg_format)
     real_resp_avg_format = str('{0:.3g} days'.format(real_response_average))
@@ -181,30 +190,51 @@ with matrix1:
 with matrix2:
     traction_rate = str('{0:.3g}'.format((currently_interviewing/last_four_weeks)*100)) + "%"
     st.metric("% of total applications currently in the interview phase:", traction_rate)  
-    st.metric("Longest time to respond:", '{0:.3g}'.format(response_max) + " days (" + response_max_company + ")")
+    st.metric("Longest time to respond:", '{0:.3g}'.format(longest_response) + " days (" + longest_response_company + ")")
 
 # Histogram of response time
+st.html("<hr>")
 st.subheader("Histogram of application response time:")
 df_clean = apps.dropna(subset=['Response Time (Days)'])
 # Optional filtering
 min_day = int(df_clean['Response Time (Days)'].min())
 max_day = int(df_clean['Response Time (Days)'].max())
-bin_size = st.slider("Select x-axis scaling (in days)", 1, 10, 3)
-# Histogram chart
-hist = alt.Chart(df_clean).mark_bar().encode(
-    alt.X("Response Time (Days):Q", bin=alt.Bin(step=bin_size), title="Response Time (Days)"),
-    y=alt.Y("count():Q", title="Number of Applications"),
-    tooltip=['count()'],
-).interactive()
-st.altair_chart(hist)
+
+hist1, hist2 = st.columns([7,1])
+# Scale to measure application
+with hist2:
+    bin_size = vertical_slider(
+        label = "X Scaling:",  #Optional
+        key = "vert_01" ,
+        # height = 300, #Optional - Defaults to 300
+        thumb_shape = "square", #Optional - Defaults to "circle"
+        step = 1, #Optional - Defaults to 1
+        default_value=3 ,#Optional - Defaults to 0
+        min_value= 1, # Defaults to 0
+        max_value= 10, # Defaults to 10
+        track_color = color2, #Optional - Defaults to Streamlit Red
+        slider_color = color1, #Optional
+        thumb_color= color1, #Optional - Defaults to Streamlit Red
+        value_always_visible = True , #Optional - Defaults to False
+    )
+with hist1:
+    # Histogram chart
+    hist = alt.Chart(df_clean).mark_bar().encode(
+        alt.X("Response Time (Days):Q", bin=alt.Bin(step=bin_size), title="Response Time (Days)"),
+        y=alt.Y("count():Q", title="Number of Applications"),
+        tooltip=['count()'],
+        color=alt.value(color1)
+    ).interactive()
+    st.altair_chart(hist)
+
 st.html("<hr>")
 
 # Company data
 st.subheader("Companies")
-matrix3, matrix4 = st.columns(2)
-with matrix3:
+companies1, companies2 = st.columns(2)
+with companies1:
     st.metric("Total number of applications:", total_apps)
-with matrix4:
+with companies2:
     st.metric("Number of UNIQUE companies:", len(pd.unique(apps['Company'])))
 
 # ---------------------------------------- APP DATA
@@ -212,15 +242,14 @@ st.write("#")
 st.html("<hr style='border: 5px solid black; border-radius: 5px'>")
 st.header("Application Breakdown")
 
-next1, next2 = st.columns(2, border=True)
-
+next1, next2 = st.columns(2, border=True, gap="medium")
 with next1:
     st.subheader("Applications per WEEK:")
     # Create the chart
     weekly = alt.Chart(weekly_df).mark_bar().encode(
         x=alt.X("Week:O", title="Week Number"),
         y=alt.Y("Applications Per Week:Q", title="Applications"),
-        color=alt.value("#db9abc")
+        color=alt.value(color1)
     )
     st.altair_chart(weekly, use_container_width=True)
     st.html("<hr>")
@@ -230,17 +259,16 @@ with next1:
     platform = alt.Chart(role_df).mark_bar().encode(
         x=alt.X("Role Type:O", title="Role Type", sort=None),
         y=alt.Y("# of Applications:Q", title="# Applied To"),
-        color=alt.value("#98A4EB")
+        color=alt.value(color2)
     )
     st.altair_chart(platform, use_container_width=True)
-
 with next2:
     st.subheader("Applications by PLATFORM:")
     # Create the chart
     platform = alt.Chart(platform_df).mark_bar().encode(
         x=alt.X("Platform:O", title="Platform", sort=None),
         y=alt.Y("Applications Per Platform:Q", title="# Applications Sent"),
-        color=alt.value("#d59287")
+        color=alt.value(color2)
     )
     st.altair_chart(platform, use_container_width=True)
     st.html("<hr>")
@@ -250,7 +278,7 @@ with next2:
         x=alt.X('Week:O', title='Week Number'),
         y=alt.Y('Number of Interviews:Q', title='Total Interviews'),
         tooltip=['Week', 'Number of Interviews'],
-        color=alt.value("#5c7579")
+        color=alt.value(color1)
     )
     st.altair_chart(chart, use_container_width=True)
     st.text("Note: This chart shows the number of interviews per week based on when the application was sent, not when the actual interview occured. This helps show how successful a resume is on any given week and how changes to a resume impact interviews.")
@@ -265,7 +293,7 @@ st.header("Interviews")
 st.subheader("By the numbers:")
 matrix5, matrix6 = st.columns(2)
 with matrix5:
-    st.metric("Number of roles interviewed for:", companies_interviewed_at)
+    st.metric("Number of roles interviewed for:", num_interviewed_at)
     st.metric("Average number of interviews per role:", '{0:.3g}'.format(apps['Number of Interviews'].dropna().mean()))
     st.metric("Median number of interviews per role:", apps['Number of Interviews'].dropna().median())
 with matrix6:
@@ -330,7 +358,7 @@ with cal2:
             labels=True,
             labelExpr="['Mon','Tue','Wed','Thu','Fri','Sat','Sun'][datum.value]"
         )),
-            color=alt.Color('count:Q', scale=alt.Scale(scheme='blues'), title='Frequency'),
+            color=alt.Color('count:Q', scale=alt.Scale(range=[color2, color1]), title='Frequency'),
             tooltip=['date:T', 'count:Q']
         )
     st.altair_chart(heatmap, use_container_width=True)
@@ -342,13 +370,13 @@ color_field = st.selectbox(
     "Choose to color by:",
     options=["Type of Interview", "Location"]
     )
-r1, r2 = st.columns(2, border=True)
+r1, r2 = st.columns(2, border=True, gap='medium')
 with r1:
     st.subheader("Grouped by NUMBER OF ROUNDS:")
     round = alt.Chart(int_round_df).mark_bar().encode(
         x=alt.X("Round:O", title="Interview Round"),
         y=alt.Y("State:Q", title="Count"),
-        color=alt.Color(f'{color_field}:N', title=color_field, scale=alt.Scale(scheme='blueorange')),
+        color=alt.Color(f'{color_field}:N', title=color_field, scale=alt.Scale(range=[color1, color2, color3, color4])),
     )
     st.altair_chart(round, use_container_width=True)
 with r2:
@@ -356,7 +384,7 @@ with r2:
     role = alt.Chart(int_role_df).mark_bar().encode(
         x=alt.X("Role Type:O", title="Role Type"),
         y=alt.Y("State:Q", title="Count"),
-        color=alt.Color(f'{color_field}:N', title=color_field, scale=alt.Scale(scheme='blueorange')),
+        color=alt.Color(f'{color_field}:N', title=color_field, scale=alt.Scale(range=[color1, color2, color3, color4])),
     )
     st.altair_chart(role, use_container_width=True)
 
@@ -365,11 +393,11 @@ st.text("Performance is how well I feel I did in the interview. Experience is ho
 r1, r2 = st.columns(2)
 with r1:
     # Rounds line chart
-    roundp = alt.Chart(just_round_df).mark_line(color='#a8cee5').encode(
+    roundp = alt.Chart(just_round_df).mark_line(color=color1).encode(
         x=alt.X("Round:O", title="Interview Round"),
         y=alt.Y("Performance:Q", title="Performance")
     )
-    rounde = alt.Chart(just_round_df).mark_line(color='#206fb2').encode(
+    rounde = alt.Chart(just_round_df).mark_line(color=color2).encode(
         x=alt.X("Round:O", title="Interview Round"),
         y=alt.Y("Experience:Q", title="Experience")
     )
@@ -377,7 +405,23 @@ with r1:
     st.altair_chart(layered_chart)  # or use layered_chart
 with r2:
     # Rounds line chart
-    st.bar_chart(just_role_df, x="Role Type", y=['Performance', 'Experience'], stack=False)
+    melted = just_role_df.melt(
+        id_vars='Role Type',
+        value_vars=['Performance', 'Experience'],
+        var_name='Metric',
+        value_name='Value'
+    )
+
+    # Create grouped bar chart
+    chart = alt.Chart(melted).mark_bar().encode(
+        x=alt.X('Role Type:N', title='Role Type'),
+        xOffset=alt.XOffset('Metric:N'),  # This creates side-by-side bars
+        y=alt.Y('Value:Q', title='Score'),
+        color=alt.Color('Metric:N', title='Metric', scale=alt.Scale(range=[color1, color2])),
+        tooltip=['Role Type', 'Metric', 'Value']
+    ).properties(width=500)
+
+    st.altair_chart(chart, use_container_width=True)
 
 # ---------------------------------------- ROE
 st.write("#")
@@ -411,7 +455,7 @@ scatter = alt.Chart(filtered_data).mark_circle(size=60).encode(
 # Display
 scatterplot = st.altair_chart(scatter, use_container_width=True)
 
-more1, more2 = st.columns(2, border=True)
+more1, more2 = st.columns(2, border=True, gap='medium')
 with more1:
     st.markdown("""
             **'Chance of Success' Definition**: 
@@ -429,10 +473,9 @@ with more1:
     responses_above_1 = ((roe['Chance of Success'] > 0.5) & 
                          (roe['Application Status'].isin(['Rejected', 'Bailed', 'Interviewing', 'Ghosted', 'On Hold']))).sum()
     positive_chance = (responses_above_1/total_above_1)*100
-    total_accuracy = real_response_rate/total_apps
+    total_accuracy = real_response_number/total_apps
     accuracy = (positive_chance-total_accuracy)/total_accuracy-100
-    st.metric("Real response rate (exluding auto-denials):", 
-              f"{real_resp_rate:.2f}%")
+    st.metric("Real response rate (excluding auto-denials):", real_response_rate)
     st.metric("Response rate where the chance of success is above 50%:", 
               f"{positive_chance:.2f}%")
     st.metric("Accuracy of the chance of success metric:", 
@@ -458,6 +501,7 @@ with more2:
     )
 
 # Scatterplot
+st.html("<hr>")
 st.subheader('Application Effort')
 effort_plot = alt.Chart(filtered_data).mark_circle(size=60).encode(
     x=alt.X("Application Number:Q", title="Application Number"),
@@ -481,6 +525,7 @@ st.html(
 )
 
 # Scatterplot
+st.html("<hr>")
 st.subheader('Return on Effort')
 roe_plot = alt.Chart(filtered_data).mark_circle(size=60).encode(
     x=alt.X("Application Number:Q", title="Application Number"),
