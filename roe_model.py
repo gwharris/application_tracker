@@ -268,7 +268,7 @@ with next2:
     platform = alt.Chart(platform_df).mark_bar().encode(
         x=alt.X("Platform:O", title="Platform", sort=None),
         y=alt.Y("Applications Per Platform:Q", title="# Applications Sent"),
-        color=alt.value(color2)
+        color=alt.value(color3)
     )
     st.altair_chart(platform, use_container_width=True)
     st.html("<hr>")
@@ -278,7 +278,7 @@ with next2:
         x=alt.X('Week:O', title='Week Number'),
         y=alt.Y('Number of Interviews:Q', title='Total Interviews'),
         tooltip=['Week', 'Number of Interviews'],
-        color=alt.value(color1)
+        color=alt.value(color4)
     )
     st.altair_chart(chart, use_container_width=True)
     st.text("Note: This chart shows the number of interviews per week based on when the application was sent, not when the actual interview occured. This helps show how successful a resume is on any given week and how changes to a resume impact interviews.")
