@@ -204,18 +204,23 @@ max_day = int(df_clean['Response Time (Days)'].max())
 hist1, hist2 = st.columns([7,1])
 # Scale to measure application
 with hist2:
-    bin_size = vertical_slider(
-        key = "vert_01" ,
-        # height = 300, #Optional - Defaults to 300
-        step = 1, #Optional - Defaults to 1
-        default_value=3 ,#Optional - Defaults to 0
-        min_value= 1, # Defaults to 0
-        max_value= 10, # Defaults to 10
-        track_color = color2, #Optional - Defaults to Streamlit Red
-        slider_color = color1, #Optional
-        thumb_color= color1, #Optional - Defaults to Streamlit Red
-        value_always_visible = True , #Optional - Defaults to False
-    )
+    try:
+        bin_size = vertical_slider(
+            label = "X Scaling:",  #Optional
+            key = "vert_01" ,
+            # height = 300, #Optional - Defaults to 300
+            thumb_shape = "square", #Optional - Defaults to "circle"
+            step = 1, #Optional - Defaults to 1
+            default_value=3 ,#Optional - Defaults to 0
+            min_value= 1, # Defaults to 0
+            max_value= 10, # Defaults to 10
+            track_color = color2, #Optional - Defaults to Streamlit Red
+            slider_color = color1, #Optional
+            thumb_color= color1, #Optional - Defaults to Streamlit Red
+            value_always_visible = True , #Optional - Defaults to False
+        )
+    except:
+        st.text("Cannot write slider")
 with hist1:
     # Histogram chart
     hist = alt.Chart(df_clean).mark_bar().encode(
