@@ -1,7 +1,6 @@
 
 import pandas as pd
 import streamlit as st
-import streamlit.components.v1 as components
 import altair as alt
 import os
 import openpyxl
@@ -148,9 +147,9 @@ with c4:
 
 # ---------------------------------------- CONTENTS
 st.write("#")
-components.html("<hr style='border: 5px solid black; border-radius: 5px'>")
+st.html("<hr style='border: 5px solid black; border-radius: 5px'>")
 st.header("Table of Contents")
-components.html("<ol style='padding-left: 5%;'>"
+st.html("<ol style='padding-left: 5%;'>"
         "<li><a href='#data-summary'>Data Summary</a></li>"
         "<li><a href='#application-breakdown'>Application Breakdown</a></li>"
         "<li><a href='#interviews'>Interviews</a></li>"
@@ -161,7 +160,7 @@ st.text("Looking forward to hearing from you!")
 
 # ---------------------------------------- DATA AGG
 st.write("#")
-components.html("<hr style='border: 5px solid black; border-radius: 5px'>")
+st.html("<hr style='border: 5px solid black; border-radius: 5px'>")
 st.header("Data Summary")
 
 # Dataframes
@@ -175,7 +174,7 @@ with col2:
     st.dataframe(role_df, hide_index=True)
 
 # Response data
-components.html("<hr>")
+st.html("<hr>")
 st.subheader("Responses")
 st.text("'Pending' applications are not considered in response metrics to keep data historical and not current.")
 matrix1, matrix2 = st.columns(2)
@@ -190,11 +189,11 @@ with matrix1:
     st.metric("Real average time to respond (*excluding* auto-denials):", real_resp_avg_format)
 with matrix2:
     traction_rate = str('{0:.3g}'.format((currently_interviewing/last_four_weeks)*100)) + "%"
-    st.metric("% of applications in the last 4 weeks currently in the interview phase:", traction_rate)  
+    st.metric("% of applications in the past 4 weeks currently in the interview phase:", traction_rate)  
     st.metric("Longest time to respond:", '{0:.3g}'.format(longest_response) + " days (" + longest_response_company + ")")
 
 # Histogram of response time
-components.html("<hr>")
+st.html("<hr>")
 st.subheader("Histogram of application response time:")
 df_clean = apps.dropna(subset=['Response Time (Days)'])
 # Optional filtering
@@ -204,37 +203,31 @@ max_day = int(df_clean['Response Time (Days)'].max())
 hist1, hist2 = st.columns([7,1])
 # Scale to measure application
 with hist2:
-    try:
-        bin_size = vertical_slider(
-            label = "X Scaling:",  #Optional
-            key = "vert_01" ,
-            # height = 300, #Optional - Defaults to 300
-            thumb_shape = "square", #Optional - Defaults to "circle"
-            step = 1, #Optional - Defaults to 1
-            default_value=3 ,#Optional - Defaults to 0
-            min_value= 1, # Defaults to 0
-            max_value= 10, # Defaults to 10
-            track_color = color2, #Optional - Defaults to Streamlit Red
-            slider_color = color1, #Optional
-            thumb_color= color1, #Optional - Defaults to Streamlit Red
-            value_always_visible = True , #Optional - Defaults to False
-        )
-    except:
-        st.text("Cannot write slider")
+    bin_size = vertical_slider(
+        label = "X Scaling:",  #Optional
+        key = "vert_01" ,
+        # height = 300, #Optional - Defaults to 300
+        thumb_shape = "square", #Optional - Defaults to "circle"
+        step = 1, #Optional - Defaults to 1
+        default_value=3 ,#Optional - Defaults to 0
+        min_value= 1, # Defaults to 0
+        max_value= 10, # Defaults to 10
+        track_color = color2, #Optional - Defaults to Streamlit Red
+        slider_color = color1, #Optional
+        thumb_color= color1, #Optional - Defaults to Streamlit Red
+        value_always_visible = True , #Optional - Defaults to False
+    )
 with hist1:
     # Histogram chart
-    try:
-        hist = alt.Chart(df_clean).mark_bar().encode(
-            alt.X("Response Time (Days):Q", bin=alt.Bin(step=bin_size), title="Response Time (Days)"),
-            y=alt.Y("count():Q", title="Number of Applications"),
-            tooltip=['count()'],
-            color=alt.value(color1)
-        ).interactive()
-        st.altair_chart(hist)
-    except:
-        st.text("Encountered an issue.")
+    hist = alt.Chart(df_clean).mark_bar().encode(
+        alt.X("Response Time (Days):Q", bin=alt.Bin(step=bin_size), title="Response Time (Days)"),
+        y=alt.Y("count():Q", title="Number of Applications"),
+        tooltip=['count()'],
+        color=alt.value(color1)
+    ).interactive()
+    st.altair_chart(hist)
 
-components.html("<hr>")
+st.html("<hr>")
 
 # Company data
 st.subheader("Companies")
@@ -246,7 +239,7 @@ with companies2:
 
 # ---------------------------------------- APP DATA
 st.write("#")
-components.html("<hr style='border: 5px solid black; border-radius: 5px'>")
+st.html("<hr style='border: 5px solid black; border-radius: 5px'>")
 st.header("Application Breakdown")
 
 next1, next2 = st.columns(2, border=True, gap="medium")
@@ -259,7 +252,7 @@ with next1:
         color=alt.value(color1)
     )
     st.altair_chart(weekly, use_container_width=True)
-    components.html("<hr>")
+    st.html("<hr>")
 
     st.subheader("Applications by ROLE:")
     # Create the chart
@@ -278,7 +271,7 @@ with next2:
         color=alt.value(color3)
     )
     st.altair_chart(platform, use_container_width=True)
-    components.html("<hr>")
+    st.html("<hr>")
 
     st.subheader("Interviews by WEEK APPLIED:")
     chart = alt.Chart(weekly_df).mark_bar().encode(
@@ -293,7 +286,7 @@ with next2:
 
 # ---------------------------------------- INTERVIEWS
 st.write("#")
-components.html("<hr style='border: 5px solid black; border-radius: 5px'>")
+st.html("<hr style='border: 5px solid black; border-radius: 5px'>")
 st.header("Interviews")
 
 # Prelim data data
@@ -308,7 +301,7 @@ with matrix6:
     interview_max = apps['Number of Interviews'].dropna().max()
     interview_max_company = apps.iloc[int(apps['Number of Interviews'].dropna().idxmax()), 0]
     st.metric("Longest interview process:", '{0:.2g}'.format(interview_max) + " interviews (" + interview_max_company + ")")
-components.html("<hr>")
+st.html("<hr>")
 
 # Number of rounds
 int_round_df = interviews.groupby(['Round', 'Type of Interview', 'Location']).agg({
@@ -369,7 +362,7 @@ with cal2:
             tooltip=['date:T', 'count:Q']
         )
     st.altair_chart(heatmap, use_container_width=True)
-components.html("<hr>")
+st.html("<hr>")
 
 # Selectbox for interview stats
 st.subheader("Breakdown of Interviews")
@@ -434,7 +427,7 @@ with r2:
 
 # ---------------------------------------- ROE
 st.write("#")
-components.html("<hr style='border: 5px solid black; border-radius: 5px'>")
+st.html("<hr style='border: 5px solid black; border-radius: 5px'>")
 st.header("Return on Effort")
 
 # Scatterplot colored by application status
@@ -470,7 +463,7 @@ with more1:
             **'Chance of Success' Definition**: 
             This is a measure of the likelihood of success, or the chance I think I have of getting an offer. High values indicate that I should be an ideal applicant to the position. Low values indicate that it might be a stretch for me to get the job. Each point is measured by estimating the effort for each: role, average salary, salary range (max - min salary), and industry.""")
     st.text("Notes about the metric:")
-    components.html(
+    st.html(
         "<ol style='padding-left: 5%'>" \
             "<li>Roles that have an exact '0.5' chance of success did not have a salary listed on the job posting.</li>" \
             "<li>The salary range is a confidence score. When companies have narrow salary ranges (IE 80-90k has a 10k range) the company likely has a set expectation for the role. If the range is extremely high (IE $100k or more) then the role seems ambiguous and it's not clear how the company is hiring or what a realistic salary is, and they may even be hiring for multiple levels of experience.</li>" \
@@ -502,7 +495,7 @@ with more2:
     )
     st.altair_chart(status, use_container_width=True)
     st.text("Notes about application status:")
-    components.html(
+    st.html(
         "<ol style='padding-left: 5%'>" \
             "<li>The 'Viewed' status in the master data is exclusive to LinkedIn applications. LinkedIn sends an email notification when companies view or download resumes. If the company does not respond, the application is left in the 'Viewed' status.</li>" \
             "<li>The 'Bailed' status means that I decided to no longer pursue the application for a number of reasons, including: feeling like I was being scammed, the interviewers did not impress me, or the role sounded like a bad fit after learning more information.</li>" \
@@ -510,7 +503,7 @@ with more2:
     )
 
 # Scatterplot
-components.html("<hr>")
+st.html("<hr>")
 st.subheader('Application Effort')
 effort_plot = alt.Chart(filtered_data).mark_circle(size=60).encode(
     x=alt.X("Application Number:Q", title="Application Number"),
@@ -526,7 +519,7 @@ st.markdown("""
         **'Effort' Definition**: 
         This is a measure of how much effort has been put into an application. High values indicate that a lot of effort has been put into an application and low values indicate low levels of effort was put in.  Each point is measured by estimating the effort for each: status (applied, interviewing, rejected, etc), platform, and number of interviews.""")
 st.text("Notes about the data:")
-components.html(
+st.html(
         "<ol style='padding-left: 5%'>" \
         "<li>Each interview linearly increases the effort.</li>" \
         "<li>Platforms with 'easy apply' are rated more 'easy' than platforms that need fresh information with each application.</li>" \
@@ -534,7 +527,7 @@ components.html(
 )
 
 # Scatterplot
-components.html("<hr>")
+st.html("<hr>")
 st.subheader('Return on Effort')
 roe_plot = alt.Chart(filtered_data).mark_circle(size=60).encode(
     x=alt.X("Application Number:Q", title="Application Number"),
@@ -551,4 +544,4 @@ st.markdown("""
         The return on investment, or in this case, return on effort (ROE). For example, if the ROE is 3, there would be a 3X return on the effort that I put into the application. Return on effort is qualitative and doesn't exactly capture the experience of an application. For example, getting an interview from an application does more than just reward effort - it signifies that something was right in the application (like resume, cover letter, experience, etc.) and validates the direction of future applications. In the end, the only thing that really matters is getting an offer, so offers are weighted at a 10X value.""")
 
 st.write("#")
-components.html("<a href='#job-application-data-visualization'>Return to Top</a>")
+st.html("<a href='#job-application-data-visualization'>Return to Top</a>")
