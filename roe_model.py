@@ -207,7 +207,6 @@ with hist2:
     bin_size = vertical_slider(
         key = "vert_01" ,
         # height = 300, #Optional - Defaults to 300
-        thumb_shape = "square", #Optional - Defaults to "circle"
         step = 1, #Optional - Defaults to 1
         default_value=3 ,#Optional - Defaults to 0
         min_value= 1, # Defaults to 0
