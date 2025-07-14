@@ -205,7 +205,6 @@ hist1, hist2 = st.columns([7,1])
 # Scale to measure application
 with hist2:
     bin_size = vertical_slider(
-        label = "X Scaling:",  #Optional
         key = "vert_01" ,
         # height = 300, #Optional - Defaults to 300
         thumb_shape = "square", #Optional - Defaults to "circle"
