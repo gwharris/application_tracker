@@ -223,13 +223,16 @@ with hist2:
         st.text("Cannot write slider")
 with hist1:
     # Histogram chart
-    hist = alt.Chart(df_clean).mark_bar().encode(
-        alt.X("Response Time (Days):Q", bin=alt.Bin(step=bin_size), title="Response Time (Days)"),
-        y=alt.Y("count():Q", title="Number of Applications"),
-        tooltip=['count()'],
-        color=alt.value(color1)
-    ).interactive()
-    st.altair_chart(hist)
+    try:
+        hist = alt.Chart(df_clean).mark_bar().encode(
+            alt.X("Response Time (Days):Q", bin=alt.Bin(step=bin_size), title="Response Time (Days)"),
+            y=alt.Y("count():Q", title="Number of Applications"),
+            tooltip=['count()'],
+            color=alt.value(color1)
+        ).interactive()
+        st.altair_chart(hist)
+    except:
+        st.text("Encountered an issue.")
 
 components.html("<hr>")
 
