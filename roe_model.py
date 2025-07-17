@@ -52,6 +52,7 @@ response_average = apps['Response Time (Days)'].dropna().mean()
 real_response_average = apps[apps['Status'].isin(real_resp)]['Response Time (Days)'].dropna().mean()
 longest_response = apps['Response Time (Days)'].dropna().max()
 longest_response_company = apps.iloc[int(apps['Response Time (Days)'].dropna().idxmax()), 0]
+num_weeks = apps["Week"].max() # Number of weeks for later calc
 
 # Interview metrics
 num_interviewed_at = sum(1 for app_stat in apps["Status"].dropna() if app_stat in real_resp)
@@ -252,6 +253,7 @@ with next1:
         color=alt.value(color1)
     )
     st.altair_chart(weekly, use_container_width=True)
+    st.text("Average applications per week: " + '{0:.3g}'.format(total_apps/num_weeks))
     st.html("<hr>")
 
     st.subheader("Applications by ROLE:")
@@ -289,20 +291,6 @@ st.write("#")
 st.html("<hr style='border: 5px solid black; border-radius: 5px'>")
 st.header("Interviews")
 
-# Prelim data data
-st.subheader("By the numbers:")
-matrix5, matrix6 = st.columns(2)
-with matrix5:
-    st.metric("Number of roles interviewed for:", num_interviewed_at)
-    st.metric("Average number of interviews per role:", '{0:.3g}'.format(apps['Number of Interviews'].dropna().mean()))
-    st.metric("Median number of interviews per role:", apps['Number of Interviews'].dropna().median())
-with matrix6:
-    st.metric("Total interviews:", int(sum_interviews))
-    interview_max = apps['Number of Interviews'].dropna().max()
-    interview_max_company = apps.iloc[int(apps['Number of Interviews'].dropna().idxmax()), 0]
-    st.metric("Longest interview process:", '{0:.2g}'.format(interview_max) + " interviews (" + interview_max_company + ")")
-st.html("<hr>")
-
 # Number of rounds
 int_round_df = interviews.groupby(['Round', 'Type of Interview', 'Location']).agg({
         'State': 'count',
@@ -313,6 +301,8 @@ just_round_df = interviews.groupby("Round").agg({
         'State': 'count',
         'Performance': 'mean',
         'Experience': 'mean'
+    }).rename(columns={
+        'State': "Number of Interviews"
     }).reset_index().sort_values("Round")
 # Type of role
 int_role_df = interviews.groupby(['Role Type', 'Type of Interview', 'Location']).agg({
@@ -335,7 +325,30 @@ int_loc_df = interviews.groupby('Location').agg({
 int_type_df = interviews.groupby('Type of Interview').agg({
         'State': 'count'
     }).reset_index().sort_values("State", ascending=False)
-    
+
+# Prelim data data
+st.subheader("By the numbers:")
+matrix5, matrix6 = st.columns([2,3])
+with matrix5:
+    st.metric("Number of roles interviewed for:", num_interviewed_at)
+    st.metric("Average number of interviews per role:", '{0:.3g}'.format(apps['Number of Interviews'].dropna().mean()))
+    st.metric("Average number of interviews per week:", '{0:.3g}'.format(sum_interviews/num_weeks))
+    st.metric("Total interviews:", int(sum_interviews))
+    interview_max = apps['Number of Interviews'].dropna().max()
+    interview_max_company = apps.iloc[int(apps['Number of Interviews'].dropna().idxmax()), 0]
+    st.metric("Longest interview process:", '{0:.2g}'.format(interview_max) + " interviews (" + interview_max_company + ")")
+with matrix6:
+    st.subheader("Number of interviews, by round:")
+    round_chart = alt.Chart(just_round_df).mark_bar().encode(
+        x=alt.X('Round:O', title='Round'),
+        y=alt.Y('Number of Interviews:Q', title='Total Interviews'),
+        tooltip=['Round', 'Number of Interviews'],
+        color=alt.value(color4)
+    )
+    st.altair_chart(round_chart, use_container_width=True)
+
+st.html("<hr>")
+
 # Interview heatmap
 st.subheader("Heatmap of interviews:")
 cal1, cal2, cal3 = st.columns([1,4,1])
