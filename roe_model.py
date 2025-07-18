@@ -530,7 +530,7 @@ effort_plot = alt.Chart(filtered_data).mark_circle(size=60).encode(
 effort_scatterplot = st.altair_chart(effort_plot, use_container_width=True)
 st.markdown("""
         **'Effort' Definition**: 
-        This is a measure of how much effort has been put into an application. High values indicate that a lot of effort has been put into an application and low values indicate low levels of effort was put in.  Each point is measured by estimating the effort for each: status (applied, interviewing, rejected, etc), platform, and number of interviews.""")
+        This is a measure of how much effort has been put into an application. High values indicate that a lot of effort has been put into an application and low values indicate low levels of effort was put in.  Each point is measured by estimating the effort for each: platform and number of interviews.""")
 st.text("Notes about the data:")
 st.html(
         "<ol style='padding-left: 5%'>" \
@@ -554,7 +554,7 @@ roe_plot = alt.Chart(filtered_data).mark_circle(size=60).encode(
 roe_scatterplot = st.altair_chart(roe_plot, use_container_width=True)
 st.markdown("""
         **'Return on Effort' Definition**: 
-        The return on investment, or in this case, return on effort (ROE). For example, if the ROE is 3, there would be a 3X return on the effort that I put into the application. Return on effort is qualitative and doesn't exactly capture the experience of an application. For example, getting an interview from an application does more than just reward effort - it signifies that something was right in the application (like resume, cover letter, experience, etc.) and validates the direction of future applications. In the end, the only thing that really matters is getting an offer, so offers are weighted at a 10X value.""")
+        The return on investment, or in this case, return on effort (ROE). For example, if the ROE is 3, there would be a 3X return on the effort that I put into the application. Return on effort is qualitative and doesn't exactly capture the experience of an application. For example, getting an interview from an application does more than just reward effort - it signifies that something was right in the application (like resume, cover letter, experience, etc.) and validates the direction of future applications.""")
 
 st.write("#")
 st.html("<a href='#job-application-data-visualization'>Return to Top</a>")
