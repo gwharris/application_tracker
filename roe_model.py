@@ -138,13 +138,12 @@ st.text("Example data is loaded on the public application - please ask for the m
 st.text("Choose the colors for the graphs:")
 c1, c2, c3, c4 = st.columns(4)
 with c1:
-    color1 = st.color_picker("Color 1", "#7D984B")
+    color1 = st.color_picker("Color 1", "#26bce1")
 with c2:
-    color2 = st.color_picker("Color 2:", "#BBD38D")
-with c3:
-    color3 = st.color_picker("Color 3", "#74A6C4")
-with c4:
-    color4 = st.color_picker("Color 4:", "#3F6A85")
+    color2 = st.color_picker("Color 2:", "#4a58dd")
+# CHART COLORS
+gradient = [color1, color2]
+barcolor = "turbo"
 
 # ---------------------------------------- CONTENTS
 st.write("#")
@@ -270,7 +269,7 @@ with next2:
     platform = alt.Chart(platform_df).mark_bar().encode(
         x=alt.X("Platform:O", title="Platform", sort=None),
         y=alt.Y("Applications Per Platform:Q", title="# Applications Sent"),
-        color=alt.value(color3)
+        color=alt.value(color2)
     )
     st.altair_chart(platform, use_container_width=True)
     st.html("<hr>")
@@ -280,7 +279,7 @@ with next2:
         x=alt.X('Week:O', title='Week Number'),
         y=alt.Y('Number of Interviews:Q', title='Total Interviews'),
         tooltip=['Week', 'Number of Interviews'],
-        color=alt.value(color4)
+        color=alt.value(color1)
     )
     st.altair_chart(chart, use_container_width=True)
     st.text("Note: This chart shows the number of interviews per week based on when the application was sent, not when the actual interview occured. This helps show how successful a resume is on any given week and how changes to a resume impact interviews.")
@@ -343,7 +342,7 @@ with matrix6:
         x=alt.X('Round:O', title='Round'),
         y=alt.Y('Number of Interviews:Q', title='Total Interviews'),
         tooltip=['Round', 'Number of Interviews'],
-        color=alt.value(color4)
+        color=alt.value(color1)
     )
     st.altair_chart(round_chart, use_container_width=True)
 
@@ -371,7 +370,7 @@ with cal2:
             labels=True,
             labelExpr="['Mon','Tue','Wed','Thu','Fri','Sat','Sun'][datum.value]"
         )),
-            color=alt.Color('count:Q', scale=alt.Scale(range=[color2, color1]), title='Frequency'),
+            color=alt.Color('count:Q', scale=alt.Scale(range=gradient), title='Frequency'),
             tooltip=['date:T', 'count:Q']
         )
     st.altair_chart(heatmap, use_container_width=True)
@@ -389,7 +388,7 @@ with r1:
     round = alt.Chart(int_round_df).mark_bar().encode(
         x=alt.X("Round:O", title="Interview Round"),
         y=alt.Y("State:Q", title="Count"),
-        color=alt.Color(f'{color_field}:N', title=color_field, scale=alt.Scale(range=[color1, color2, color3, color4])),
+        color=alt.Color(f'{color_field}:N', title=color_field, scale=alt.Scale(scheme=barcolor)),
     )
     st.altair_chart(round, use_container_width=True)
 with r2:
@@ -397,7 +396,7 @@ with r2:
     role = alt.Chart(int_role_df).mark_bar().encode(
         x=alt.X("Role Type:O", title="Role Type"),
         y=alt.Y("State:Q", title="Count"),
-        color=alt.Color(f'{color_field}:N', title=color_field, scale=alt.Scale(range=[color1, color2, color3, color4])),
+        color=alt.Color(f'{color_field}:N', title=color_field, scale=alt.Scale(scheme=barcolor)),
     )
     st.altair_chart(role, use_container_width=True)
 
@@ -464,7 +463,7 @@ scatter = alt.Chart(filtered_data).mark_circle(size=60).encode(
     y=alt.Y("Chance of Success:Q", title="Chance of Success"),
     color=alt.Color("Application Status:N", 
                     title="Status",
-                    scale=alt.Scale(scheme='turbo')),
+                    scale=alt.Scale(scheme=barcolor)),
     tooltip=["Application Number", "Company Name", "Application Status", "Chance of Success"]
 )
 # Display
@@ -504,7 +503,7 @@ with more2:
         y=alt.Y("Applications In Status:Q", title="# In Status"),
         color=alt.Color("Status:N", 
                 title="Status",
-                scale=alt.Scale(scheme='turbo'))
+                scale=alt.Scale(scheme=barcolor))
     )
     st.altair_chart(status, use_container_width=True)
     st.text("Notes about application status:")
@@ -523,7 +522,7 @@ effort_plot = alt.Chart(filtered_data).mark_circle(size=60).encode(
     y=alt.Y("Application Effort:Q", title="Application Effort"),
     color=alt.Color("Application Status:N", 
                     title="Status",
-                    scale=alt.Scale(scheme='turbo')),
+                    scale=alt.Scale(scheme=barcolor)),
     tooltip=["Application Number", "Company Name", "Application Status", "Application Effort"]
 )
 # Display
@@ -547,7 +546,7 @@ roe_plot = alt.Chart(filtered_data).mark_circle(size=60).encode(
     y=alt.Y("ROE:Q", title="Return on Effort"),
     color=alt.Color("Application Status:N", 
                     title="Status",
-                    scale=alt.Scale(scheme='turbo')),
+                    scale=alt.Scale(scheme=barcolor)),
     tooltip=["Application Number", "Company Name", "Application Status", "ROE"]
 )
 # Display
