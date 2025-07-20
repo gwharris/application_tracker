@@ -99,8 +99,8 @@ def groupby_percents(sheet, col_name):
     rdf = rdf.rename(columns={
         'Applications': '# of Applications',
         'Companies': '# of Companies',
-        'Salary_Min': 'Avg Min',
-        'Salary_Max': 'Avg Max',
+        'Salary_Min': 'Avg Min K',
+        'Salary_Max': 'Avg Max K',
     })
     return rdf
 
@@ -168,10 +168,26 @@ col1, col2 = st.columns(2, gap='large')
 with col1:
     st.text("Applications grouped by INDUSTRY:")
     st.dataframe(industry_df, hide_index=True)
+    st.subheader("Applications by INDUSTRY:")
+    # Create the chart
+    platform = alt.Chart(industry_df).mark_bar().encode(
+        x=alt.X("Industry:O", title="Industry", sort=None),
+        y=alt.Y("# of Applications:Q", title="# Applications Sent"),
+        color=alt.value(color1)
+    )
+    st.altair_chart(platform, use_container_width=True)
     st.text("In the master data, the industry 'Recruiter' represents listings posted by a recruiting agency on behalf of another company. The overwhelming majority of postings like these are from financial/investment banking firms. The response rate for these kinds of listings is abysmal.")
 with col2:
     st.text("Applications grouped by ROLE TYPE:")
     st.dataframe(role_df, hide_index=True)
+    st.subheader("Applications by ROLE:")
+    # Create the chart
+    platform = alt.Chart(role_df).mark_bar().encode(
+        x=alt.X("Role Type:O", title="Role Type", sort=None),
+        y=alt.Y("# of Applications:Q", title="# Applied To"),
+        color=alt.value(color2)
+    )
+    st.altair_chart(platform, use_container_width=True)
 
 # Response data
 st.html("<hr>")
@@ -191,6 +207,44 @@ with matrix2:
     traction_rate = str('{0:.3g}'.format((currently_interviewing/last_four_weeks)*100)) + "%"
     st.metric("% of applications in the past 4 weeks currently in the interview phase:", traction_rate)  
     st.metric("Longest time to respond:", '{0:.3g}'.format(longest_response) + " days (" + longest_response_company + ")")
+
+st.html("<hr>")
+
+# Company data
+st.subheader("Companies")
+companies1, companies2 = st.columns(2)
+with companies1:
+    st.metric("Total number of applications:", total_apps)
+with companies2:
+    st.metric("Number of UNIQUE companies:", len(pd.unique(apps['Company'])))
+
+# ---------------------------------------- APP DATA
+st.write("#")
+st.html("<hr style='border: 5px solid black; border-radius: 5px'>")
+st.header("Application Breakdown")
+st.text("Where are applications being sent, and how many?")
+
+next1, next2 = st.columns(2, border=True, gap="medium")
+with next1:
+    st.subheader("Applications per WEEK:")
+    # Create the chart
+    weekly = alt.Chart(weekly_df).mark_bar().encode(
+        x=alt.X("Week:O", title="Week Number"),
+        y=alt.Y("Applications Per Week:Q", title="Applications"),
+        color=alt.value(color1)
+    )
+    st.altair_chart(weekly, use_container_width=True)
+    st.text("Average applications per week: " + '{0:.3g}'.format(total_apps/num_weeks))
+
+with next2:
+    st.subheader("Applications by PLATFORM:")
+    # Create the chart
+    platform = alt.Chart(platform_df).mark_bar().encode(
+        x=alt.X("Platform:O", title="Platform", sort=None),
+        y=alt.Y("Applications Per Platform:Q", title="# Applications Sent"),
+        color=alt.value(color2)
+    )
+    st.altair_chart(platform, use_container_width=True)
 
 # Histogram of response time
 st.html("<hr>")
@@ -226,64 +280,6 @@ with hist1:
         color=alt.value(color1)
     ).interactive()
     st.altair_chart(hist)
-
-st.html("<hr>")
-
-# Company data
-st.subheader("Companies")
-companies1, companies2 = st.columns(2)
-with companies1:
-    st.metric("Total number of applications:", total_apps)
-with companies2:
-    st.metric("Number of UNIQUE companies:", len(pd.unique(apps['Company'])))
-
-# ---------------------------------------- APP DATA
-st.write("#")
-st.html("<hr style='border: 5px solid black; border-radius: 5px'>")
-st.header("Application Breakdown")
-
-next1, next2 = st.columns(2, border=True, gap="medium")
-with next1:
-    st.subheader("Applications per WEEK:")
-    # Create the chart
-    weekly = alt.Chart(weekly_df).mark_bar().encode(
-        x=alt.X("Week:O", title="Week Number"),
-        y=alt.Y("Applications Per Week:Q", title="Applications"),
-        color=alt.value(color1)
-    )
-    st.altair_chart(weekly, use_container_width=True)
-    st.text("Average applications per week: " + '{0:.3g}'.format(total_apps/num_weeks))
-    st.html("<hr>")
-
-    st.subheader("Applications by ROLE:")
-    # Create the chart
-    platform = alt.Chart(role_df).mark_bar().encode(
-        x=alt.X("Role Type:O", title="Role Type", sort=None),
-        y=alt.Y("# of Applications:Q", title="# Applied To"),
-        color=alt.value(color2)
-    )
-    st.altair_chart(platform, use_container_width=True)
-with next2:
-    st.subheader("Applications by PLATFORM:")
-    # Create the chart
-    platform = alt.Chart(platform_df).mark_bar().encode(
-        x=alt.X("Platform:O", title="Platform", sort=None),
-        y=alt.Y("Applications Per Platform:Q", title="# Applications Sent"),
-        color=alt.value(color2)
-    )
-    st.altair_chart(platform, use_container_width=True)
-    st.html("<hr>")
-
-    st.subheader("Interviews by WEEK APPLIED:")
-    chart = alt.Chart(weekly_df).mark_bar().encode(
-        x=alt.X('Week:O', title='Week Number'),
-        y=alt.Y('Number of Interviews:Q', title='Total Interviews'),
-        tooltip=['Week', 'Number of Interviews'],
-        color=alt.value(color1)
-    )
-    st.altair_chart(chart, use_container_width=True)
-    st.text("Note: This chart shows the number of interviews per week based on when the application was sent, not when the actual interview occured. This helps show how successful a resume is on any given week and how changes to a resume impact interviews.")
-    st.text("There's usually a 2-3 week lag time in getting interviews due to response time turnaround.")
 
 # ---------------------------------------- INTERVIEWS
 st.write("#")
@@ -325,26 +321,42 @@ int_type_df = interviews.groupby('Type of Interview').agg({
         'State': 'count'
     }).reset_index().sort_values("State", ascending=False)
 
-# Prelim data data
+# Interview charts
 st.subheader("By the numbers:")
-matrix5, matrix6 = st.columns([2,3])
+matrix5, matrix6 = st.columns(2, border=True, gap="medium")
 with matrix5:
-    st.metric("Number of roles interviewed for:", num_interviewed_at)
-    st.metric("Average number of interviews per role:", '{0:.3g}'.format(apps['Number of Interviews'].dropna().mean()))
-    st.metric("Average number of interviews per week:", '{0:.3g}'.format(sum_interviews/num_weeks))
-    st.metric("Total interviews:", int(sum_interviews))
-    interview_max = apps['Number of Interviews'].dropna().max()
-    interview_max_company = apps.iloc[int(apps['Number of Interviews'].dropna().idxmax()), 0]
-    st.metric("Longest interview process:", '{0:.2g}'.format(interview_max) + " interviews (" + interview_max_company + ")")
+    st.subheader("Interviews by WEEK APPLIED:")
+    chart = alt.Chart(weekly_df).mark_bar().encode(
+        x=alt.X('Week:O', title='Week Number'),
+        y=alt.Y('Number of Interviews:Q', title='Total Interviews'),
+        tooltip=['Week', 'Number of Interviews'],
+        color=alt.value(color1)
+    )
+    st.altair_chart(chart, use_container_width=True)
+    st.text("Note: This chart shows the number of interviews per week based on when the application was sent, not when the actual interview occured. This helps show how successful a resume is on any given week and how changes to a resume impact interviews.")
+    st.text("There's usually a 2-3 week lag time in getting interviews due to response time turnaround.")   
 with matrix6:
     st.subheader("Number of interviews, by round:")
     round_chart = alt.Chart(just_round_df).mark_bar().encode(
         x=alt.X('Round:O', title='Round'),
         y=alt.Y('Number of Interviews:Q', title='Total Interviews'),
         tooltip=['Round', 'Number of Interviews'],
-        color=alt.value(color1)
+        color=alt.value(color2)
     )
     st.altair_chart(round_chart, use_container_width=True)
+    st.text("'Rounds' are defined by a separate, new, scheduled item. For example, going in person to an interview for 3 back-to-back meetings is considered only one round, even if 3 separate meetings occured. If multiple interviews happen for the same round on different dates, they are considered the same round but separate interviews (ie meeting with 3 people for a round but each interview is scheduled for a different day.)")
+
+# Metrics
+matrix7, matrix8 = st.columns(2, gap="medium")
+with matrix7:
+    st.metric("Number of roles interviewed for:", num_interviewed_at)
+    st.metric("Average number of interviews per role:", '{0:.3g}'.format(apps['Number of Interviews'].dropna().mean()))
+    st.metric("Average number of interviews per week:", '{0:.3g}'.format(sum_interviews/num_weeks))
+with matrix8: 
+    st.metric("Total interviews:", int(sum_interviews))
+    interview_max = apps['Number of Interviews'].dropna().max()
+    interview_max_company = apps.iloc[int(apps['Number of Interviews'].dropna().idxmax()), 0]
+    st.metric("Longest interview process:", '{0:.2g}'.format(interview_max) + " interviews (" + interview_max_company + ")")
 
 st.html("<hr>")
 
