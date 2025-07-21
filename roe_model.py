@@ -13,19 +13,29 @@ st.set_page_config(layout="wide", page_title="Application Data")
 # ---------------------------------------- READ FILE
 # Check if file exists. Throws error if file is not present
 
-data_file = "app_tracker.xlsx"
+# File names
+DEFAULT_FILE = "example_app_tracker.xlsx"
+REAL_FILE = "app_tracker.xlsx"
 
-if os.path.exists(data_file):
-    df = pd.read_excel(data_file)
-    st.success("Success: Data loaded from master file.")
+# User upload
+uploaded_file = st.file_uploader("If you have access to the master application data file, please upload it here:", type=["xlsx", "xls"])
+
+# Load data
+if uploaded_file is not None:
+    apps = pd.read_excel(uploaded_file, sheet_name="Tracker")
+    roe = pd.read_excel(uploaded_file, sheet_name="ROE Calculation")
+    interviews = pd.read_excel(uploaded_file, sheet_name="Interviews")
+    st.success("✅ Uploaded file is being used.")
+elif os.path.exists(REAL_FILE):
+    apps = pd.read_excel(REAL_FILE, sheet_name="Tracker")
+    roe = pd.read_excel(REAL_FILE, sheet_name="ROE Calculation")
+    interviews = pd.read_excel(REAL_FILE, sheet_name="Interviews")
+    st.info("ℹ️ Found local app_data.xlsx file.")
 else:
-    alert = st.warning("Note: Example data is loaded below.")
-    data_file = "example_app_tracker.xlsx"
-
-# SHEETS
-apps = pd.read_excel(data_file, sheet_name="Tracker")
-roe = pd.read_excel(data_file, sheet_name="ROE Calculation")
-interviews = pd.read_excel(data_file, sheet_name="Interviews")
+    apps = pd.read_excel(DEFAULT_FILE, sheet_name="Tracker")
+    roe = pd.read_excel(DEFAULT_FILE, sheet_name="ROE Calculation")
+    interviews = pd.read_excel(DEFAULT_FILE, sheet_name="Interviews")
+    st.warning("⚠️ Master data set not found. Using default example data.")
 
 # ---------------------------------------- CONSTANTS
 
