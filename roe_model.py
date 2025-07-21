@@ -18,7 +18,7 @@ DEFAULT_FILE = "example_app_tracker.xlsx"
 REAL_FILE = "app_tracker.xlsx"
 
 # User upload
-uploaded_file = st.file_uploader("If you have access to the master application data file, please upload it here:", type=["xlsx", "xls"])
+uploaded_file = st.file_uploader("Upload your own application tracker here:", type=["xlsx", "xls"])
 
 # Load data
 if uploaded_file is not None:
@@ -30,7 +30,7 @@ elif os.path.exists(REAL_FILE):
     apps = pd.read_excel(REAL_FILE, sheet_name="Tracker")
     roe = pd.read_excel(REAL_FILE, sheet_name="ROE Calculation")
     interviews = pd.read_excel(REAL_FILE, sheet_name="Interviews")
-    st.info("ℹ️ Found local app_data.xlsx file.")
+    st.info("ℹ️ Running app locally with app_tracker.xlsx.")
 else:
     apps = pd.read_excel(DEFAULT_FILE, sheet_name="Tracker")
     roe = pd.read_excel(DEFAULT_FILE, sheet_name="ROE Calculation")
