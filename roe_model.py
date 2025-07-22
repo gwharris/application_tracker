@@ -178,7 +178,13 @@ col1, col2 = st.columns(2, gap='large')
 with col1:
     st.text("Applications grouped by INDUSTRY:")
     st.dataframe(industry_df, hide_index=True)
-    st.subheader("Applications by INDUSTRY:")
+    st.text("'Real' responses are responses that are not automated denials. Statuses for this are explored in the 'ROE' section and include Interviewing, Rejected, Bailed, On Hold, etc.")
+with col2:
+    st.text("Applications grouped by ROLE TYPE:")
+    st.dataframe(role_df, hide_index=True)
+
+col3, col4 = st.columns(2, gap='large')
+with col3:
     # Create the chart
     platform = alt.Chart(industry_df).mark_bar().encode(
         x=alt.X("Industry:O", title="Industry", sort=None),
@@ -187,10 +193,7 @@ with col1:
     )
     st.altair_chart(platform, use_container_width=True)
     st.text("In the master data, the industry 'Recruiter' represents listings posted by a recruiting agency on behalf of another company. The overwhelming majority of postings like these are from financial/investment banking firms. The response rate for these kinds of listings is abysmal.")
-with col2:
-    st.text("Applications grouped by ROLE TYPE:")
-    st.dataframe(role_df, hide_index=True)
-    st.subheader("Applications by ROLE:")
+with col4:
     # Create the chart
     platform = alt.Chart(role_df).mark_bar().encode(
         x=alt.X("Role Type:O", title="Role Type", sort=None),
@@ -259,6 +262,7 @@ with next2:
 # Histogram of response time
 st.html("<hr>")
 st.subheader("Histogram of application response time:")
+st.text("How long does it take a company to respond to my application?")
 df_clean = apps.dropna(subset=['Response Time (Days)'])
 # Optional filtering
 min_day = int(df_clean['Response Time (Days)'].min())
