@@ -46,8 +46,8 @@ total_apps = apps[apps.columns[0]].dropna().count()
 status_order = pd.unique(apps["Status"].dropna())
 # Lists of Positive response stats
 all_resp = ['Rejected', 'Bailed', 'Interviewing', 'Ghosted', 
-            'On Hold', 'Denied', 'Viewed', 'Offer'] # Denied and Viewed are auto responses
-real_resp = ['Rejected', 'Bailed', 'Interviewing', 'Ghosted', 'On Hold', 'Offer'] # So real != Denied, Viewed
+            'On Hold', 'Denied', 'Viewed', 'Offer', 'No Offer'] # Denied and Viewed are auto responses
+real_resp = ['Rejected', 'Bailed', 'Interviewing', 'Ghosted', 'On Hold', 'Offer', 'No Offer'] # So real != Denied, Viewed
 
 # Apps DF where Pending is dropped
 apps_nopend = apps[apps["Status"].str.contains("Pending")==False]
@@ -248,7 +248,6 @@ with next1:
     )
     st.altair_chart(weekly, use_container_width=True)
     st.text("Average applications per week: " + '{0:.3g}'.format(total_apps/num_weeks))
-
 with next2:
     st.subheader("Applications by PLATFORM:")
     # Create the chart
@@ -261,7 +260,7 @@ with next2:
 
 # Histogram of response time
 st.html("<hr>")
-st.subheader("Histogram of application response time:")
+st.subheader("Application Response Time:")
 st.text("How long does it take a company to respond to my application?")
 df_clean = apps.dropna(subset=['Response Time (Days)'])
 # Optional filtering
@@ -294,6 +293,33 @@ with hist1:
         color=alt.value(color1)
     ).interactive()
     st.altair_chart(hist)
+
+# Cover Letter info
+st.html("<hr>")
+st.subheader("Cover Letter Details")
+st.text("How successful are cover letters?")
+cov1, cov2 = st.columns(2, gap="medium", border=True)
+with cov1:
+    cover = groupby_percents(apps, "Cover Letter")
+    cover = cover.sort_values("# of Applications", ascending=False)
+    cover = cover.drop(["Avg Min K", "Avg Max K"], axis=1)
+    st.dataframe(cover, hide_index=True)
+with cov2:
+    st.markdown("""
+        Notes:
+
+        Cover letter metrics were not tracked until 7/28 in the master data.
+        
+    """)
+    st.html(
+        "Status Breakdown:"
+        "<ul style='padding-left: 5%'>" \
+        "<li>Yes = Cover letter was sent.</li>" \
+        "<li>No = Cover letter was not sent.</li>" \
+        "<li>Unavailable = There was no place to add a cover letter on the application.</li>" \
+        "<li>Questionnaire = In leiu of a cover letter, there were short-answer response questions.</li>" \
+        "</ul>"
+    )
 
 # ---------------------------------------- INTERVIEWS
 st.write("#")
