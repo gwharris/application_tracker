@@ -384,7 +384,7 @@ with matrix6:
         color=alt.value(color2)
     )
     st.altair_chart(round_chart, use_container_width=True)
-    st.text("'Rounds' are defined by a separate, new, scheduled item. For example, going in person to an interview for 3 back-to-back meetings is considered only one round, even if 3 separate meetings occured. If multiple interviews happen for the same round on different dates, they are considered the same round but separate interviews (ie meeting with 3 people for a round but each interview is scheduled for a different day.)")
+    st.text("'Rounds' are defined by a separate, new, scheduled item. For example, going in-person to an interview for 3 back-to-back meetings is considered only one round, even if 3 meetings occured. If multiple interviews happen for the same round on different dates, they are considered the same round but separate interviews (ie: meeting with 3 people, but each interview is scheduled for a different day.)")
 
 # Metrics
 matrix7, matrix8 = st.columns(2, gap="medium")
@@ -459,11 +459,11 @@ st.text("Both are rated 1-5, where 5 is the most positive and 1 is the most nega
 r1, r2 = st.columns(2)
 with r1:
     # Rounds line chart
-    roundp = alt.Chart(just_round_df).mark_line(color=color1).encode(
+    roundp = alt.Chart(just_round_df).mark_line(color=color2).encode(
         x=alt.X("Round:O", title="Interview Round"),
         y=alt.Y("Performance:Q", title="Performance")
     )
-    rounde = alt.Chart(just_round_df).mark_line(color=color2).encode(
+    rounde = alt.Chart(just_round_df).mark_line(color=color1).encode(
         x=alt.X("Round:O", title="Interview Round"),
         y=alt.Y("Experience:Q", title="Experience")
     )
