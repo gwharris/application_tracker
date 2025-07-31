@@ -129,6 +129,7 @@ def groupby_smaller(sheet, count, col_name, rename, sort):
 
 industry_df = groupby_percents(apps, "Industry")
 role_df = groupby_percents(apps, "Role Type")
+size_df = groupby_percents(apps, "Company Size")
 
 weekly_df = groupby_smaller(apps, "Status", "Week", "Applications Per Week", "Week")
 weekly_df = weekly_df.drop(0) # Drop the -14 values
@@ -173,6 +174,7 @@ st.write("#")
 st.html("<hr style='border: 5px solid black; border-radius: 5px'>")
 st.header("Data Summary")
 
+st.subheader("Applications")
 # Dataframes
 col1, col2 = st.columns(2, gap='large')
 with col1:
@@ -228,6 +230,8 @@ st.subheader("Companies")
 companies1, companies2 = st.columns(2)
 with companies1:
     st.metric("Total number of applications:", total_apps)
+    st.text("Applications by COMPANY SIZE:")
+    st.dataframe(size_df.drop(["Avg Min K", "Avg Max K"], axis=1), hide_index=True)
 with companies2:
     st.metric("Number of UNIQUE companies:", len(pd.unique(apps['Company'])))
 
