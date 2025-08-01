@@ -10,6 +10,25 @@ import streamlit_toggle
 # Wide mode
 st.set_page_config(layout="wide", page_title="Application Data")
 
+# ---------------------------------------- HEADER
+header1, header2, header3 = st.columns([3,1,2], gap='large')
+with header1:
+    st.title("Job Application - Data Visualization")
+
+    # Layer 1 Columns
+    st.header("Graham Harris")
+    st.text("Since I was laid off in April 2025, I've been hard at work applying to new roles. This project is a capstone presentation of all of the data I've collected showcasing my data visualization skills.")
+    st.text("Example data is loaded on the public application - please ask for the master data set to see my actual application journey.")
+    st.text("Choose the colors for the graphs:")
+    c1, c2, c3, c4 = st.columns(4)
+    with c1:
+        color1 = st.color_picker("Color 1", "#26bce1")
+    with c2:
+        color2 = st.color_picker("Color 2:", "#4a58dd")
+    # CHART COLORS
+    gradient = [color1, color2]
+    barcolor = "turbo"
+
 # ---------------------------------------- READ FILE
 # Check if file exists. Throws error if file is not present
 
@@ -17,25 +36,36 @@ st.set_page_config(layout="wide", page_title="Application Data")
 DEFAULT_FILE = "example_app_tracker.xlsx"
 REAL_FILE = "app_tracker.xlsx"
 
+with header3:
 # User upload
-uploaded_file = st.file_uploader("Upload your own application tracker here:", type=["xlsx", "xls"])
-
-# Load data
-if uploaded_file is not None:
-    apps = pd.read_excel(uploaded_file, sheet_name="Tracker")
-    roe = pd.read_excel(uploaded_file, sheet_name="ROE Calculation")
-    interviews = pd.read_excel(uploaded_file, sheet_name="Interviews")
-    st.success("✅ Uploaded file.")
-elif os.path.exists(REAL_FILE):
-    apps = pd.read_excel(REAL_FILE, sheet_name="Tracker")
-    roe = pd.read_excel(REAL_FILE, sheet_name="ROE Calculation")
-    interviews = pd.read_excel(REAL_FILE, sheet_name="Interviews")
-    st.info("ℹ️ Running app locally with app_tracker.xlsx.")
-else:
-    apps = pd.read_excel(DEFAULT_FILE, sheet_name="Tracker")
-    roe = pd.read_excel(DEFAULT_FILE, sheet_name="ROE Calculation")
-    interviews = pd.read_excel(DEFAULT_FILE, sheet_name="Interviews")
-    st.warning("⚠️ Master data set not found. Using default example data.")
+    st.write("#")
+    uploaded_file = st.file_uploader(
+        "Upload your own application tracker here:", 
+        type=["xlsx", "xls"],
+        accept_multiple_files=False)
+    # Load data
+    if uploaded_file is not None:
+        apps = pd.read_excel(uploaded_file, sheet_name="Tracker")
+        roe = pd.read_excel(uploaded_file, sheet_name="ROE Calculation")
+        interviews = pd.read_excel(uploaded_file, sheet_name="Interviews")
+        st.success("✅ Uploaded file.")
+    elif os.path.exists(REAL_FILE):
+        apps = pd.read_excel(REAL_FILE, sheet_name="Tracker")
+        roe = pd.read_excel(REAL_FILE, sheet_name="ROE Calculation")
+        interviews = pd.read_excel(REAL_FILE, sheet_name="Interviews")
+        st.info("ℹ️ Running app locally with app_tracker.xlsx.")
+    else:
+        apps = pd.read_excel(DEFAULT_FILE, sheet_name="Tracker")
+        roe = pd.read_excel(DEFAULT_FILE, sheet_name="ROE Calculation")
+        interviews = pd.read_excel(DEFAULT_FILE, sheet_name="Interviews")
+        st.warning("⚠️ Master data set not found. Using default example data.")
+    st.download_button(
+        label="Don't have the template yet? Download it here!",
+        data="csv",
+        file_name=DEFAULT_FILE,
+        mime="text/csv",
+        icon=":material/download:",
+    )
 
 # ---------------------------------------- CONSTANTS
 
@@ -192,24 +222,6 @@ int_loc_df = interviews.groupby('Location').agg({
 int_type_df = interviews.groupby('Type of Interview').agg({
         'State': 'count'
     }).reset_index().sort_values("State", ascending=False)
-
-# ---------------------------------------- HEADER
-
-st.title("Job Application - Data Visualization")
-
-# Layer 1 Columns
-st.header("Graham Harris")
-st.text("Since I was laid off in April 2025, I've been hard at work applying to new roles. This project is a capstone presentation of all of the data I've collected showcasing my data visualization skills.")
-st.text("Example data is loaded on the public application - please ask for the master data set to see my actual application journey.")
-st.text("Choose the colors for the graphs:")
-c1, c2, c3, c4 = st.columns(4)
-with c1:
-    color1 = st.color_picker("Color 1", "#26bce1")
-with c2:
-    color2 = st.color_picker("Color 2:", "#4a58dd")
-# CHART COLORS
-gradient = [color1, color2]
-barcolor = "turbo"
 
 # ---------------------------------------- CONTENTS
 st.write("#")
