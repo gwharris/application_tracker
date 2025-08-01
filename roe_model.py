@@ -25,7 +25,7 @@ if uploaded_file is not None:
     apps = pd.read_excel(uploaded_file, sheet_name="Tracker")
     roe = pd.read_excel(uploaded_file, sheet_name="ROE Calculation")
     interviews = pd.read_excel(uploaded_file, sheet_name="Interviews")
-    st.success("✅ Uploaded file is being used.")
+    st.success("✅ Uploaded file.")
 elif os.path.exists(REAL_FILE):
     apps = pd.read_excel(REAL_FILE, sheet_name="Tracker")
     roe = pd.read_excel(REAL_FILE, sheet_name="ROE Calculation")
@@ -38,6 +38,11 @@ else:
     st.warning("⚠️ Master data set not found. Using default example data.")
 
 # ---------------------------------------- CONSTANTS
+
+# These constants are used for error handling
+apps_columns = list(apps.columns)
+roe_columns = list(roe.columns)
+interview_columns = list(interviews.columns)
 
 # Number of apps
 total_apps = apps[apps.columns[0]].dropna().count()
@@ -52,6 +57,9 @@ real_resp = ['Rejected', 'Bailed', 'Interviewing', 'Ghosted', 'On Hold', 'Offer'
 # Apps DF where Pending is dropped
 apps_nopend = apps[apps["Status"].str.contains("Pending")==False]
 total_nopend_apps = apps_nopend[apps_nopend.columns[0]].dropna().count()
+
+unique_companies = len(pd.unique(apps['Company']))
+avg_int_per_role = apps['Number of Interviews'].dropna().mean()
 
 # Response rate calcs
 response_number = sum(1 for app_stat in apps_nopend["Status"].dropna() if app_stat in all_resp)
@@ -68,6 +76,9 @@ num_weeks = apps["Week"].max() # Number of weeks for later calc
 num_interviewed_at = sum(1 for app_stat in apps["Status"].dropna() if app_stat in real_resp)
 currently_interviewing = sum(1 for app_stat in apps["Status"].dropna() if app_stat in ["Interviewing"])
 sum_interviews = interviews[interviews.columns[0]].dropna().count() # NOT sum of apps interview column cause duplicates
+
+interview_max = apps['Number of Interviews'].dropna().max()
+interview_max_company = apps.iloc[int(apps['Number of Interviews'].dropna().idxmax()), 0]
 
 # ---------------------------------------- FUNCTIONS
 
@@ -94,7 +105,8 @@ def groupby_percents(sheet, col_name):
         Salary_Min=('Salary Min (Thousands)', 'mean'),
         Salary_Max=('Salary Max (Thousands)', 'mean'),
         All_Positive=('Status', count_status(all_resp)),
-        Real_Positive=('Status', count_status(real_resp))
+        Real_Positive=('Status', count_status(real_resp)),
+        Response_Time=('Response Time (Days)', 'mean')
     ).reset_index().sort_values("Applications", ascending=False)
     # Create response % columns
     rdf['Total Responses'] = rdf['All_Positive'] / rdf['Applications'] * 100
@@ -103,6 +115,7 @@ def groupby_percents(sheet, col_name):
     rdf['Real Responses'] = rdf['Real Responses'].apply('{:.1f}%'.format)
     rdf['Salary_Min'] = rdf['Salary_Min'].apply('${:.2f}'.format)
     rdf['Salary_Max'] = rdf['Salary_Max'].apply('${:.2f}'.format)
+    rdf['Response_Time'] = rdf['Response_Time'].apply('{:.2f}'.format)
     # Drop extra columns
     rdf = rdf.drop('All_Positive', axis=1)
     rdf = rdf.drop('Real_Positive', axis=1)
@@ -111,6 +124,7 @@ def groupby_percents(sheet, col_name):
         'Companies': '# of Companies',
         'Salary_Min': 'Avg Min K',
         'Salary_Max': 'Avg Max K',
+        'Response_Time': 'Avg DTR'
     })
     return rdf
 
@@ -118,7 +132,8 @@ def groupby_percents(sheet, col_name):
 def groupby_smaller(sheet, count, col_name, rename, sort):
     rdf = sheet.groupby(col_name).agg({
         count: 'count',
-        'Number of Interviews': 'sum'
+        'Number of Interviews': 'sum',
+        'Response Time (Days)': 'mean'
     }).rename(columns={
         count: rename
     }).reset_index().sort_values(sort, ascending=False)
@@ -129,7 +144,8 @@ def groupby_smaller(sheet, count, col_name, rename, sort):
 
 industry_df = groupby_percents(apps, "Industry")
 role_df = groupby_percents(apps, "Role Type")
-size_df = groupby_percents(apps, "Company Size")
+comp_size_df = groupby_percents(apps, "Company Size")
+comp_size_df = comp_size_df.drop(["Avg Min K", "Avg Max K"], axis=1)
 
 weekly_df = groupby_smaller(apps, "Status", "Week", "Applications Per Week", "Week")
 weekly_df = weekly_df.drop(0) # Drop the -14 values
@@ -137,6 +153,45 @@ last_four_weeks = weekly_df['Applications Per Week'].head(4).sum()
 
 platform_df = groupby_smaller(apps, "Status", "Platform", "Applications Per Platform", "Applications Per Platform")
 status_df = groupby_smaller(apps, "Role Type", "Status", "Applications In Status", "Applications In Status")
+
+cover_df = groupby_percents(apps, "Cover Letter")
+cover_df = cover_df.sort_values("# of Applications", ascending=False)
+cover_df = cover_df.drop(["Avg Min K", "Avg Max K"], axis=1)
+
+# Number of rounds
+int_round_df = interviews.groupby(['Round', 'Type of Interview', 'Location']).agg({
+        'State': 'count',
+        'Performance': 'mean',
+        'Experience': 'mean'
+    }).reset_index().sort_values("Round")
+just_round_df = interviews.groupby("Round").agg({
+        'State': 'count',
+        'Performance': 'mean',
+        'Experience': 'mean'
+    }).rename(columns={
+        'State': "Number of Interviews"
+    }).reset_index().sort_values("Round")
+# Type of role
+int_role_df = interviews.groupby(['Role Type', 'Type of Interview', 'Location']).agg({
+        'State': 'count',
+        'Round': 'mean',
+        'Performance': 'mean',
+        'Experience': 'mean'
+    }).reset_index().sort_values("State", ascending=False)
+just_role_df = interviews.groupby('Role Type').agg({
+        'State': 'count',
+        'Round': 'mean',
+        'Performance': 'mean',
+        'Experience': 'mean'
+    }).reset_index().sort_values("State", ascending=False)
+# Location
+int_loc_df = interviews.groupby('Location').agg({
+        'State': 'count'
+    }).reset_index().sort_values("State", ascending=False)
+# Type of interview
+int_type_df = interviews.groupby('Type of Interview').agg({
+        'State': 'count'
+    }).reset_index().sort_values("State", ascending=False)
 
 # ---------------------------------------- HEADER
 
@@ -175,12 +230,14 @@ st.html("<hr style='border: 5px solid black; border-radius: 5px'>")
 st.header("Data Summary")
 
 st.subheader("Applications")
+st.metric("Total number of applications:", total_apps)
 # Dataframes
 col1, col2 = st.columns(2, gap='large')
 with col1:
     st.text("Applications grouped by INDUSTRY:")
     st.dataframe(industry_df, hide_index=True)
-    st.text("'Real' responses are responses that are not automated denials. Statuses for this are explored in the 'ROE' section and include Interviewing, Rejected, Bailed, On Hold, etc.")
+    st.text("'DTR' stands for 'Days to Respond' and measures how long it takes companies to send a response to an application.")
+    st.text("'Real' responses are responses that are not automated denials. The statuses that are not considered 'real' are 'Denied' and 'Viewed'. 'Denied' indicates an automated denial message and 'Viewed' means that a notification was received that the company opened the application, but did not respond.")
 with col2:
     st.text("Applications grouped by ROLE TYPE:")
     st.dataframe(role_df, hide_index=True)
@@ -204,6 +261,16 @@ with col4:
     )
     st.altair_chart(platform, use_container_width=True)
 
+st.html("<hr>")
+# Company data
+st.subheader("Companies")
+companies1, companies2 = st.columns(2)
+with companies1:
+    st.text("Applications by COMPANY SIZE:")
+    st.dataframe(comp_size_df, hide_index=True)
+with companies2:
+    st.metric("Number of UNIQUE companies:", unique_companies)
+
 # Response data
 st.html("<hr>")
 st.subheader("Responses")
@@ -223,23 +290,11 @@ with matrix2:
     st.metric("% of applications in the past 4 weeks currently in the interview phase:", traction_rate)  
     st.metric("Longest time to respond:", '{0:.3g}'.format(longest_response) + " days (" + longest_response_company + ")")
 
-st.html("<hr>")
-
-# Company data
-st.subheader("Companies")
-companies1, companies2 = st.columns(2)
-with companies1:
-    st.metric("Total number of applications:", total_apps)
-    st.text("Applications by COMPANY SIZE:")
-    st.dataframe(size_df.drop(["Avg Min K", "Avg Max K"], axis=1), hide_index=True)
-with companies2:
-    st.metric("Number of UNIQUE companies:", len(pd.unique(apps['Company'])))
-
 # ---------------------------------------- APP DATA
 st.write("#")
 st.html("<hr style='border: 5px solid black; border-radius: 5px'>")
 st.header("Application Breakdown")
-st.text("Where are applications being sent, and how many?")
+st.text("Details about the actual applications themselves.")
 
 next1, next2 = st.columns(2, border=True, gap="medium")
 with next1:
@@ -304,10 +359,7 @@ st.subheader("Cover Letter Details")
 st.text("How successful are cover letters?")
 cov1, cov2 = st.columns(2, gap="medium", border=True)
 with cov1:
-    cover = groupby_percents(apps, "Cover Letter")
-    cover = cover.sort_values("# of Applications", ascending=False)
-    cover = cover.drop(["Avg Min K", "Avg Max K"], axis=1)
-    st.dataframe(cover, hide_index=True)
+    st.dataframe(cover_df, hide_index=True)
 with cov2:
     st.markdown("""
         Notes:
@@ -329,41 +381,6 @@ with cov2:
 st.write("#")
 st.html("<hr style='border: 5px solid black; border-radius: 5px'>")
 st.header("Interviews")
-
-# Number of rounds
-int_round_df = interviews.groupby(['Round', 'Type of Interview', 'Location']).agg({
-        'State': 'count',
-        'Performance': 'mean',
-        'Experience': 'mean'
-    }).reset_index().sort_values("Round")
-just_round_df = interviews.groupby("Round").agg({
-        'State': 'count',
-        'Performance': 'mean',
-        'Experience': 'mean'
-    }).rename(columns={
-        'State': "Number of Interviews"
-    }).reset_index().sort_values("Round")
-# Type of role
-int_role_df = interviews.groupby(['Role Type', 'Type of Interview', 'Location']).agg({
-        'State': 'count',
-        'Round': 'mean',
-        'Performance': 'mean',
-        'Experience': 'mean'
-    }).reset_index().sort_values("State", ascending=False)
-just_role_df = interviews.groupby('Role Type').agg({
-        'State': 'count',
-        'Round': 'mean',
-        'Performance': 'mean',
-        'Experience': 'mean'
-    }).reset_index().sort_values("State", ascending=False)
-# Location
-int_loc_df = interviews.groupby('Location').agg({
-        'State': 'count'
-    }).reset_index().sort_values("State", ascending=False)
-# Type of interview
-int_type_df = interviews.groupby('Type of Interview').agg({
-        'State': 'count'
-    }).reset_index().sort_values("State", ascending=False)
 
 # Interview charts
 st.subheader("By the numbers:")
@@ -394,12 +411,10 @@ with matrix6:
 matrix7, matrix8 = st.columns(2, gap="medium")
 with matrix7:
     st.metric("Number of roles interviewed for:", num_interviewed_at)
-    st.metric("Average number of interviews per role:", '{0:.3g}'.format(apps['Number of Interviews'].dropna().mean()))
+    st.metric("Average number of interviews per role:", '{0:.3g}'.format(avg_int_per_role))
     st.metric("Average number of interviews per week:", '{0:.3g}'.format(sum_interviews/num_weeks))
 with matrix8: 
     st.metric("Total interviews:", int(sum_interviews))
-    interview_max = apps['Number of Interviews'].dropna().max()
-    interview_max_company = apps.iloc[int(apps['Number of Interviews'].dropna().idxmax()), 0]
     st.metric("Longest interview process:", '{0:.2g}'.format(interview_max) + " interviews (" + interview_max_company + ")")
 
 st.html("<hr>")
