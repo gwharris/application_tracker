@@ -1,3 +1,6 @@
+"""
+Model
+"""
 
 import pandas as pd
 import streamlit as st
@@ -6,6 +9,10 @@ import os
 import openpyxl
 from  streamlit_vertical_slider import vertical_slider 
 import streamlit_toggle
+
+# Data in other files for readability
+from methods import *
+import constants
 
 # Wide mode
 st.set_page_config(layout="wide", page_title="Application Data")
@@ -22,17 +29,14 @@ with header1:
     st.text("Choose the colors for the graphs:")
     c1, c2, c3, c4 = st.columns(4)
     with c1:
-        color1 = st.color_picker("Color 1", "#26bce1")
+        color1 = st.color_picker("Color 1", constants.COLOR1)
     with c2:
-        color2 = st.color_picker("Color 2:", "#4a58dd")
+        color2 = st.color_picker("Color 2:", constants.COLOR2)
     # CHART COLORS
     gradient = [color1, color2]
     barcolor = "turbo"
 
-# ---------------------------------------- READ FILE
 # Check if file exists. Throws error if file is not present
-
-# File names
 DEFAULT_FILE = "example_app_tracker.xlsx"
 REAL_FILE = "app_tracker.xlsx"
 
@@ -79,10 +83,6 @@ total_apps = apps[apps.columns[0]].dropna().count()
 
 # List of ALL statuses
 status_order = pd.unique(apps["Status"].dropna())
-# Lists of Positive response stats
-all_resp = ['Rejected', 'Bailed', 'Interviewing', 'Ghosted', 
-            'On Hold', 'Denied', 'Viewed', 'Offer', 'No Offer'] # Denied and Viewed are auto responses
-real_resp = ['Rejected', 'Bailed', 'Interviewing', 'Ghosted', 'On Hold', 'Offer', 'No Offer'] # So real != Denied, Viewed
 
 # Apps DF where Pending is dropped
 apps_nopend = apps[apps["Status"].str.contains("Pending")==False]
@@ -92,82 +92,23 @@ unique_companies = len(pd.unique(apps['Company']))
 avg_int_per_role = apps['Number of Interviews'].dropna().mean()
 
 # Response rate calcs
-response_number = sum(1 for app_stat in apps_nopend["Status"].dropna() if app_stat in all_resp)
-real_response_number = sum(1 for app_stat in apps_nopend["Status"].dropna() if app_stat in real_resp)
+response_number = sum(1 for app_stat in apps_nopend["Status"].dropna() if app_stat in constants.ALL_RESP)
+real_response_number = sum(1 for app_stat in apps_nopend["Status"].dropna() if app_stat in constants.REAL_RESP)
 
 # Response time (agnostic of Pending since response time means they had to respond)
 response_average = apps['Response Time (Days)'].dropna().mean()
-real_response_average = apps[apps['Status'].isin(real_resp)]['Response Time (Days)'].dropna().mean()
+real_response_average = apps[apps['Status'].isin(constants.REAL_RESP)]['Response Time (Days)'].dropna().mean()
 longest_response = apps['Response Time (Days)'].dropna().max()
 longest_response_company = apps.iloc[int(apps['Response Time (Days)'].dropna().idxmax()), 0]
 num_weeks = apps["Week"].max() # Number of weeks for later calc
 
 # Interview metrics
-num_interviewed_at = sum(1 for app_stat in apps["Status"].dropna() if app_stat in real_resp)
+num_interviewed_at = sum(1 for app_stat in apps["Status"].dropna() if app_stat in constants.REAL_RESP)
 currently_interviewing = sum(1 for app_stat in apps["Status"].dropna() if app_stat in ["Interviewing"])
 sum_interviews = interviews[interviews.columns[0]].dropna().count() # NOT sum of apps interview column cause duplicates
 
 interview_max = apps['Number of Interviews'].dropna().max()
 interview_max_company = apps.iloc[int(apps['Number of Interviews'].dropna().idxmax()), 0]
-
-# ---------------------------------------- FUNCTIONS
-
-# Takes the Excel structure I have and makes the Excel sheet data chartable
-def convert_to_st(df: pd.DataFrame, x: str, y: str):
-    x_side = df[x].dropna().astype(int)
-    y_side = df[y][0:len(x_side)]
-    new_df = pd.DataFrame({
-        x: x_side.values,
-        y: y_side.values
-    })
-    return new_df
-
-# Used in group by dataframes
-def count_status(status_list):
-    return lambda x: x.isin(status_list).sum()
-
-# Returns a df in teh right formatting for apps
-def groupby_percents(sheet, col_name):
-    rdf = sheet.groupby(col_name).agg(
-        Applications=('Status', 'count'),
-        Companies=('Company', pd.Series.nunique),
-        Interviews=('Number of Interviews', 'sum'),
-        Salary_Min=('Salary Min (Thousands)', 'mean'),
-        Salary_Max=('Salary Max (Thousands)', 'mean'),
-        All_Positive=('Status', count_status(all_resp)),
-        Real_Positive=('Status', count_status(real_resp)),
-        Response_Time=('Response Time (Days)', 'mean')
-    ).reset_index().sort_values("Applications", ascending=False)
-    # Create response % columns
-    rdf['Total Responses'] = rdf['All_Positive'] / rdf['Applications'] * 100
-    rdf['Total Responses'] = rdf['Total Responses'].apply('{:.1f}%'.format)
-    rdf['Real Responses'] = rdf['Real_Positive'] / rdf['Applications'] * 100
-    rdf['Real Responses'] = rdf['Real Responses'].apply('{:.1f}%'.format)
-    rdf['Salary_Min'] = rdf['Salary_Min'].apply('${:.2f}'.format)
-    rdf['Salary_Max'] = rdf['Salary_Max'].apply('${:.2f}'.format)
-    rdf['Response_Time'] = rdf['Response_Time'].apply('{:.2f}'.format)
-    # Drop extra columns
-    rdf = rdf.drop('All_Positive', axis=1)
-    rdf = rdf.drop('Real_Positive', axis=1)
-    rdf = rdf.rename(columns={
-        'Applications': '# of Applications',
-        'Companies': '# of Companies',
-        'Salary_Min': 'Avg Min K',
-        'Salary_Max': 'Avg Max K',
-        'Response_Time': 'Avg DTR'
-    })
-    return rdf
-
-# For DFs that need less groupby fields
-def groupby_smaller(sheet, count, col_name, rename, sort):
-    rdf = sheet.groupby(col_name).agg({
-        count: 'count',
-        'Number of Interviews': 'sum',
-        'Response Time (Days)': 'mean'
-    }).rename(columns={
-        count: rename
-    }).reset_index().sort_values(sort, ascending=False)
-    return rdf
 
 # ---------------------------------------- GROUP BYS
 # Dataframes from the Applications page that are grouped by category
@@ -187,6 +128,9 @@ status_df = groupby_smaller(apps, "Role Type", "Status", "Applications In Status
 cover_df = groupby_percents(apps, "Cover Letter")
 cover_df = cover_df.sort_values("# of Applications", ascending=False)
 cover_df = cover_df.drop(["Avg Min K", "Avg Max K"], axis=1)
+
+month_df = groupby_percents(apps, "Month").sort_values("Month")
+month_df = month_df.drop(["Avg Min K", "Avg Max K"], axis=1)
 
 # Number of rounds
 int_round_df = interviews.groupby(['Round', 'Type of Interview', 'Location']).agg({
@@ -276,12 +220,14 @@ with col4:
 st.html("<hr>")
 # Company data
 st.subheader("Companies")
-companies1, companies2 = st.columns(2)
+companies1, companies2 = st.columns(2, gap='medium')
 with companies1:
     st.text("Applications by COMPANY SIZE:")
     st.dataframe(comp_size_df, hide_index=True)
+    st.text("Note: 'DTR' stands for 'Days to Respond'.")
 with companies2:
-    st.metric("Number of UNIQUE companies:", unique_companies)
+    st.metric("Number of unique companies:", unique_companies)
+    st.metric("Average number of applications per company:", '{:.2f}'.format(total_apps/unique_companies))
 
 # Response data
 st.html("<hr>")
@@ -302,35 +248,7 @@ with matrix2:
     st.metric("% of applications in the past 4 weeks currently in the interview phase:", traction_rate)  
     st.metric("Longest time to respond:", '{0:.3g}'.format(longest_response) + " days (" + longest_response_company + ")")
 
-# ---------------------------------------- APP DATA
-st.write("#")
-st.html("<hr style='border: 5px solid black; border-radius: 5px'>")
-st.header("Application Breakdown")
-st.text("Details about the actual applications themselves.")
-
-next1, next2 = st.columns(2, border=True, gap="medium")
-with next1:
-    st.subheader("Applications per WEEK:")
-    # Create the chart
-    weekly = alt.Chart(weekly_df).mark_bar().encode(
-        x=alt.X("Week:O", title="Week Number"),
-        y=alt.Y("Applications Per Week:Q", title="Applications"),
-        color=alt.value(color1)
-    )
-    st.altair_chart(weekly, use_container_width=True)
-    st.text("Average applications per week: " + '{0:.3g}'.format(total_apps/num_weeks))
-with next2:
-    st.subheader("Applications by PLATFORM:")
-    # Create the chart
-    platform = alt.Chart(platform_df).mark_bar().encode(
-        x=alt.X("Platform:O", title="Platform", sort=None),
-        y=alt.Y("Applications Per Platform:Q", title="# Applications Sent"),
-        color=alt.value(color2)
-    )
-    st.altair_chart(platform, use_container_width=True)
-
 # Histogram of response time
-st.html("<hr>")
 st.subheader("Application Response Time:")
 st.text("How long does it take a company to respond to my application?")
 df_clean = apps.dropna(subset=['Response Time (Days)'])
@@ -365,6 +283,43 @@ with hist1:
     ).interactive()
     st.altair_chart(hist)
 
+# ---------------------------------------- APP DATA
+st.write("#")
+st.html("<hr style='border: 5px solid black; border-radius: 5px'>")
+st.header("Application Breakdown")
+st.text("Details about the actual applications themselves.")
+
+next1, next2 = st.columns(2, border=True, gap="medium")
+with next1:
+    st.subheader("Applications per WEEK:")
+    # Create the chart
+    weekly = alt.Chart(weekly_df).mark_bar().encode(
+        x=alt.X("Week:O", title="Week Number"),
+        y=alt.Y("Applications Per Week:Q", title="Applications"),
+        color=alt.value(color1)
+    )
+    st.altair_chart(weekly, use_container_width=True)
+    st.text("Average applications per week: " + '{0:.3g}'.format(total_apps/num_weeks))
+with next2:
+    st.subheader("Applications by PLATFORM:")
+    # Create the chart
+    platform = alt.Chart(platform_df).mark_bar().encode(
+        x=alt.X("Platform:O", title="Platform", sort=None),
+        y=alt.Y("Applications Per Platform:Q", title="# Applications Sent"),
+        color=alt.value(color2)
+    )
+    st.altair_chart(platform, use_container_width=True)
+
+st.html("<hr>")
+st.subheader("Month by Month")
+mon1, mon2 = st.columns(2, gap='medium')
+with mon1:
+    st.dataframe(month_df, hide_index=True)
+    st.text("Note: 'DTR' stands for 'Days to Respond'.")
+with mon2:
+    st.text("How has my process changed over time?")
+    st.text("Usually there's a 2-3 week lag in responses from companies, so data becomes more accurate as revisions come in.")
+
 # Cover Letter info
 st.html("<hr>")
 st.subheader("Cover Letter Details")
@@ -372,11 +327,12 @@ st.text("How successful are cover letters?")
 cov1, cov2 = st.columns(2, gap="medium", border=True)
 with cov1:
     st.dataframe(cover_df, hide_index=True)
+    st.text("Note: 'DTR' stands for 'Days to Respond'.")
 with cov2:
     st.markdown("""
         Notes:
 
-        Cover letter metrics were not tracked until 7/28 in the master data.
+        Cover letter metrics were not tracked until 7/28 in the master data. Some data may not be accurate.
         
     """)
     st.html(
@@ -529,8 +485,9 @@ st.header("Return on Effort")
 roe_formatted = roe.reset_index().rename(columns={"index": "Application Number"})
 # Get unique statuses from your data
 unique_statuses = roe_formatted["Application Status"].unique().tolist()
-# Drop the weird zero at the end
-unique_statuses = unique_statuses[0:len(unique_statuses)-1]
+# Drop the weird zero at the end if it exists
+if unique_statuses[len(unique_statuses)-1] == 0:
+    unique_statuses = unique_statuses[0:len(unique_statuses)-1]
 # Streamlit multiselect widget
 selected_statuses = st.multiselect(
     "Select application statuses to display:",
@@ -551,6 +508,7 @@ scatter = alt.Chart(filtered_data).mark_circle(size=60).encode(
 )
 # Display
 scatterplot = st.altair_chart(scatter, use_container_width=True)
+st.text("Note: The return on effort charts all index from 0. Add 1 to find the real application number.")
 
 more1, more2 = st.columns(2, border=True, gap='medium')
 with more1:
