@@ -1,7 +1,14 @@
 """
 Model
+
+By Graham Harris
+
+The example data file to personalize this project is called example_app_tracker.xlsx.
+
+I haven't added any variable display so you have to use the exact column names I have or it throws an error. Whoops.
 """
 
+# Requirements
 import pandas as pd
 import streamlit as st
 import altair as alt
@@ -118,11 +125,12 @@ role_df = groupby_percents(apps, "Role Type")
 comp_size_df = groupby_percents(apps, "Company Size")
 comp_size_df = comp_size_df.drop(["Avg Min K", "Avg Max K"], axis=1)
 
-weekly_df = groupby_smaller(apps, "Status", "Week", "Applications Per Week", "Week")
-weekly_df = weekly_df.drop(0) # Drop the -14 values
-last_four_weeks = weekly_df['Applications Per Week'].head(4).sum()
+weekly_df = groupby_percents(apps, "Week")
+if weekly_df.iloc[len(weekly_df)-1][0] < 0: # Drop extra auto values if they exist
+    weekly_df = weekly_df.drop(0) 
+last_four_weeks = weekly_df['# of Applications'].head(4).sum()
 
-platform_df = groupby_smaller(apps, "Status", "Platform", "Applications Per Platform", "Applications Per Platform")
+platform_df = groupby_percents(apps, "Platform")
 status_df = groupby_smaller(apps, "Role Type", "Status", "Applications In Status", "Applications In Status")
 
 cover_df = groupby_percents(apps, "Cover Letter")
@@ -251,10 +259,10 @@ with matrix2:
 # Histogram of response time
 st.subheader("Application Response Time:")
 st.text("How long does it take a company to respond to my application?")
-df_clean = apps.dropna(subset=['Response Time (Days)'])
+hist_apps_clean = apps.dropna(subset=['Response Time (Days)'])
 # Optional filtering
-min_day = int(df_clean['Response Time (Days)'].min())
-max_day = int(df_clean['Response Time (Days)'].max())
+min_day = int(hist_apps_clean['Response Time (Days)'].min())
+max_day = int(hist_apps_clean['Response Time (Days)'].max())
 
 hist1, hist2 = st.columns([7,1])
 # Scale to measure application
@@ -275,12 +283,20 @@ with hist2:
     )
 with hist1:
     # Histogram chart
-    hist = alt.Chart(df_clean).mark_bar().encode(
+    hist = alt.Chart(hist_apps_clean).mark_bar().encode(
         alt.X("Response Time (Days):Q", bin=alt.Bin(step=bin_size), title="Response Time (Days)"),
         y=alt.Y("count():Q", title="Number of Applications"),
         tooltip=['count()'],
         color=alt.value(color1)
     ).interactive()
+    # Text layer with aggregate count
+    hist_text = hist.mark_text(
+        align='center',
+        baseline='bottom',
+        dy=-2
+    ).encode(
+        text='count():Q'
+    )
     st.altair_chart(hist)
 
 # ---------------------------------------- APP DATA
@@ -295,9 +311,12 @@ with next1:
     # Create the chart
     weekly = alt.Chart(weekly_df).mark_bar().encode(
         x=alt.X("Week:O", title="Week Number"),
-        y=alt.Y("Applications Per Week:Q", title="Applications"),
+        y=alt.Y("# of Applications:Q", title="Applications"),
         color=alt.value(color1)
     )
+    # Text labels showing response_rate
+    weekly =  weekly + bar_text(weekly, -16, "Total Responses") + bar_text(weekly, -4, "Real Responses")
+    # Chart
     st.altair_chart(weekly, use_container_width=True)
     st.text("Average applications per week: " + '{0:.3g}'.format(total_apps/num_weeks))
 with next2:
@@ -305,10 +324,23 @@ with next2:
     # Create the chart
     platform = alt.Chart(platform_df).mark_bar().encode(
         x=alt.X("Platform:O", title="Platform", sort=None),
-        y=alt.Y("Applications Per Platform:Q", title="# Applications Sent"),
+        y=alt.Y("# of Applications:Q", title="# Applications Sent"),
         color=alt.value(color2)
     )
+    # Text labels showing response_rate
+    platform_chart_text = platform.mark_text(
+            align='center',
+            baseline='bottom',
+            dy=-2
+    ).encode(
+        text=alt.Text('Real Responses:N')  # Show as percent
+    )
+    # Text labels showing response_rate
+    platform =  platform + bar_text(platform, -16, "Total Responses") + bar_text(platform, -4, "Real Responses")
+    # Chart
     st.altair_chart(platform, use_container_width=True)
+st.text("Key: 'T' is Total Response rate, 'R' is Real Response rate.")
+st.text("Ex: In Week 1, the total response rate was T and the real response rate was R.")
 
 st.html("<hr>")
 st.subheader("Month by Month")
@@ -357,8 +389,8 @@ with matrix5:
     st.subheader("Interviews by WEEK APPLIED:")
     chart = alt.Chart(weekly_df).mark_bar().encode(
         x=alt.X('Week:O', title='Week Number'),
-        y=alt.Y('Number of Interviews:Q', title='Total Interviews'),
-        tooltip=['Week', 'Number of Interviews'],
+        y=alt.Y('Interviews:Q', title='Number of Interviews'),
+        tooltip=['Week', 'Interviews'],
         color=alt.value(color1)
     )
     st.altair_chart(chart, use_container_width=True)
@@ -368,7 +400,7 @@ with matrix6:
     st.subheader("Number of interviews, by round:")
     round_chart = alt.Chart(just_round_df).mark_bar().encode(
         x=alt.X('Round:O', title='Round'),
-        y=alt.Y('Number of Interviews:Q', title='Total Interviews'),
+        y=alt.Y('Number of Interviews:Q', title='Number of Interviews'),
         tooltip=['Round', 'Number of Interviews'],
         color=alt.value(color2)
     )
@@ -597,4 +629,14 @@ st.markdown("""
         The return on investment, or in this case, return on effort (ROE). For example, if the ROE is 3, there would be a 3X return on the effort that I put into the application. Return on effort is qualitative and doesn't exactly capture the experience of an application. For example, getting an interview from an application does more than just reward effort - it signifies that something was right in the application (like resume, cover letter, experience, etc.) and validates the direction of future applications.""")
 
 st.write("#")
+st.html("<hr style='border: 5px solid black; border-radius: 5px'>")
+st.header("Glossary")
+sizing1, sizing2 = st.columns([3,2])
+with sizing1:
+    st.metric("Days to respond; a response is measured on the first contact after an application is sent.", "DTR", border=True)
+    st.metric("Quantified experience of interviewing. Loosely measures how well the interviewers did at conducting the interview.", "Experience", border=True)
+    st.metric("Percieved performance during an interview. Basically a difficulty/confidence score.", "Performance", border=True)
+
+st.write("#")
+st.html("<hr style='border: 5px solid black; border-radius: 5px'>")
 st.html("<a href='#job-application-data-visualization'>Return to Top</a>")
