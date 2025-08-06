@@ -1,10 +1,33 @@
 """
 Methods
 """
-import constants
+import sections.constants as constants
 import pandas as pd
 
 # ---------------------------------------- FUNCTIONS
+
+# Validates if the correc information is in the passed excel
+def validate_excel_headers(col_names, required_columns):
+    """
+    Validates headers in an Excel sheet.
+    
+    Returns:
+        dict: Keys are headers (required or extra),
+              Values are:
+                - True if required and present
+                - False if required and missing
+                - "extra" if present but not required
+    """
+    # 1. Validate required headers
+    header_status = {col: (col in col_names) for col in required_columns}
+    
+    # 2. Add extra headers
+    for col in col_names:
+        if col not in required_columns:
+            header_status[col] = "extra"
+    
+    return header_status
+
 
 # Takes the Excel structure and returns a formatted df
 def convert_to_st(df: pd.DataFrame, x: str, y: str):
@@ -33,8 +56,8 @@ def groupby_percents(sheet, col_name):
         Applications=('Status', 'count'),
         Companies=('Company', pd.Series.nunique),
         Interviews=('Number of Interviews', 'sum'),
-        Salary_Min=('Salary Min (Thousands)', 'mean'),
-        Salary_Max=('Salary Max (Thousands)', 'mean'),
+        Salary_Min=('Salary Min', 'mean'),
+        Salary_Max=('Salary Max', 'mean'),
         All_Positive=('Status', count_status(constants.ALL_RESP)),
         Real_Positive=('Status', count_status(constants.REAL_RESP)),
         Response_Time=('Response Time (Days)', 'mean')
