@@ -11,27 +11,22 @@ color1 = constants.COLOR1
 color2 = constants.COLOR2
 
 def show(apps):
-    st.title("Application Breakdown")
+    st.title("Application Data")
     try:
         # ----------------------------------------------- Constants
         # Number of apps
         total_apps = apps[apps.columns[0]].dropna().count()
 
-        # List of ALL statuses
-        status_order = pd.unique(apps["Status"].dropna())
-
         # Apps DF where Pending is dropped
         apps_nopend = apps[apps["Status"].str.contains("Pending")==False]
-        total_nopend_apps = apps_nopend[apps_nopend.columns[0]].dropna().count()
 
         unique_companies = len(pd.unique(apps['Company']))
-        avg_int_per_role = apps['Number of Interviews'].dropna().mean()
 
         # Response rate calcs
         response_number = sum(1 for app_stat in apps_nopend["Status"].dropna() if app_stat in constants.ALL_RESP)
         real_response_number = sum(1 for app_stat in apps_nopend["Status"].dropna() if app_stat in constants.REAL_RESP)
 
-        # Response time (agnostic of Pending since response time means they had to respond)
+        # Response time (only historical, not considering Pending)
         response_average = apps['Response Time (Days)'].dropna().mean()
         real_response_average = apps[apps['Status'].isin(constants.REAL_RESP)]['Response Time (Days)'].dropna().mean()
         longest_response = apps['Response Time (Days)'].dropna().max()
@@ -39,7 +34,6 @@ def show(apps):
         num_weeks = apps["Week"].max() # Number of weeks for later calc
 
         # Interview metrics
-        num_interviewed_at = sum(1 for app_stat in apps["Status"].dropna() if app_stat in constants.REAL_RESP)
         currently_interviewing = sum(1 for app_stat in apps["Status"].dropna() if app_stat in ["Interviewing"])
 
         # ----------------------------------------------- Dataframes
@@ -62,11 +56,14 @@ def show(apps):
         cover_df = cover_df.sort_values("# of Applications", ascending=False)
         cover_df = cover_df.drop(["Avg Min K", "Avg Max K"], axis=1)
 
+        month_df = groupby_percents(apps, "Month").sort_values("Month")
+        month_df = month_df.drop(["Avg Min K", "Avg Max K"], axis=1)
+
         # ----------------------------------------------- Calculations
-        st.subheader("Applications")
-        st.metric("Total number of applications:", total_apps)
+        st.header("Job Details")
+        st.write("Data about the job posting, like industry, title, company, etc.")
         # Dataframes
-        col1, col2 = st.columns(2, gap='large')
+        col1, col2 = st.columns(2, border=True, gap='large')
         with col1:
             st.text("Applications grouped by INDUSTRY:")
             st.dataframe(industry_df, hide_index=True)
@@ -104,6 +101,7 @@ def show(apps):
             st.dataframe(comp_size_df, hide_index=True)
             st.text("Note: 'DTR' stands for 'Days to Respond'.")
         with companies2:
+            st.metric("Total number of applications:", total_apps)
             st.metric("Number of unique companies:", unique_companies)
             st.metric("Average number of applications per company:", '{:.2f}'.format(total_apps/unique_companies))
 
@@ -169,10 +167,11 @@ def show(apps):
             )
             st.altair_chart(hist)
 
+            # ----------------------------------------------- More Calculations
             st.write("#")
             st.html("<hr style='border: 5px solid black; border-radius: 5px'>")
-            st.header("Application Breakdown")
-            st.text("Details about the actual applications themselves.")
+            st.header("Application Data")
+            st.text("Details about the actual applications themselves, like cover letter metrics, resume differences, etc.")
 
             next1, next2 = st.columns(2, border=True, gap="medium")
             with next1:

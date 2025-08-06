@@ -201,4 +201,4 @@ def show(apps, interviews):
             st.altair_chart(chart, use_container_width=True)
 
     except:
-        st.write("Something went wrong.")
+        st.write("Something went wrong.\nTwo sheets are required for interview metrics: 'Tracker' and 'Interviews'. Please make sure you have sheets with those names!")

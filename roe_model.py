@@ -11,8 +11,8 @@ from sections import glossary
 from sections import constants
 from sections import methods
 
-DEFAULT_FILE = "example_app_tracker.xlsx"
-REAL_FILE = "app_tracker.xlsx"
+DEFAULT_FILE = "excel/example_app_tracker.xlsx"
+REAL_FILE = "excel/app_tracker.xlsx"
 
 # Wide mode
 st.set_page_config(layout="wide", page_title="Application Data")
@@ -75,7 +75,7 @@ st.html("<hr style='border: 5px solid black; border-radius: 5px'>")
 st.sidebar.title("Navigation")
 pages = [
     "Introduction",
-    "Application Breakdown",
+    "Application Data",
     "Interviews",
     "ROE",
     "Glossary"
@@ -86,7 +86,7 @@ page = st.sidebar.radio("Go to", pages)
 if page == "Introduction":
     intro.show()
 
-elif page == "Application Breakdown":
+elif page == "Application Data":
     breakdown.show(apps)
 
 elif page == "Interviews":
