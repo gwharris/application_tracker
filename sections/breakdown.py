@@ -11,7 +11,7 @@ color1 = constants.COLOR1
 color2 = constants.COLOR2
 
 def show(apps):
-    st.header("Application Breakdown")
+    st.title("Application Breakdown")
     try:
         # ----------------------------------------------- Constants
         # Number of apps
