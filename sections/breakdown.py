@@ -63,7 +63,7 @@ def show(apps):
         st.header("Job Details")
         st.write("Data about the job posting, like industry, title, company, etc.")
         # Dataframes
-        col1, col2 = st.columns(2, border=True, gap='large')
+        col1, col2 = st.columns(2, border=True)
         with col1:
             st.text("Applications grouped by INDUSTRY:")
             st.dataframe(industry_df, hide_index=True)
@@ -73,7 +73,7 @@ def show(apps):
             st.text("Applications grouped by ROLE TYPE:")
             st.dataframe(role_df, hide_index=True)
 
-        col3, col4 = st.columns(2, gap='large')
+        col3, col4 = st.columns(2, gap='medium')
         with col3:
             # Create the chart
             platform = alt.Chart(industry_df).mark_bar().encode(
@@ -95,7 +95,7 @@ def show(apps):
         st.html("<hr>")
         # Company data
         st.subheader("Companies")
-        companies1, companies2 = st.columns(2, gap='medium')
+        companies1, companies2 = st.columns([2,1], gap='medium')
         with companies1:
             st.text("Applications by COMPANY SIZE:")
             st.dataframe(comp_size_df, hide_index=True)
@@ -204,13 +204,13 @@ def show(apps):
 
             st.html("<hr>")
             st.subheader("Month by Month")
-            mon1, mon2 = st.columns(2, gap='medium')
+            mon1, mon2 = st.columns([2,1], gap='medium')
             with mon1:
                 try:
                     month_df = month_df[month_df["# of Applications"] != 0]
+                    st.dataframe(month_df, hide_index=True)
                 except:
                     st.text("Error dropping null value months.")
-                st.dataframe(month_df, hide_index=True)
                 st.text("Note: 'DTR' stands for 'Days to Respond'.")
             with mon2:
                 st.text("How has my process changed over time?")
@@ -220,7 +220,7 @@ def show(apps):
             st.html("<hr>")
             st.subheader("Resume Details")
             st.text("How successful are tailored resumes?")
-            res1, res2 = st.columns(2, gap="medium", border=True)
+            res1, res2 = st.columns([2,1], gap="medium")
             with res1:
                 st.dataframe(resume_df, hide_index=True)
             with res2:
@@ -230,7 +230,7 @@ def show(apps):
             st.html("<hr>")
             st.subheader("Cover Letter Details")
             st.text("How successful are cover letters?")
-            cov1, cov2 = st.columns(2, gap="medium", border=True)
+            cov1, cov2 = st.columns([2,1], gap="medium")
             with cov1:
                 st.dataframe(cover_df, hide_index=True)
             with cov2:

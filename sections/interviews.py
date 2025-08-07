@@ -72,9 +72,7 @@ def show(apps, interviews):
 
         # ----------------------------------------------- Calculations
         st.header("Interviews")
-
         # Interview charts
-        st.subheader("By the numbers:")
         matrix5, matrix6 = st.columns(2, border=True, gap="medium")
         with matrix5:
             st.subheader("Interviews by WEEK APPLIED:")
