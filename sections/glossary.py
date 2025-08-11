@@ -1,7 +1,7 @@
 import streamlit as st
 
 def show():
-    st.subheader("Glossary")
+    st.title("Glossary")
     sizing1, sizing2 = st.columns([3,2])
     with sizing1:
         st.metric("Days to respond; a response is measured on the first contact after an application is sent.", "DTR", border=True)
