@@ -135,4 +135,4 @@ def show(apps, roe):
 
 
     except:
-        st.write("Something went wrong.")
+        st.write("Something went wrong, check to make sure all columns are labeled correctly.")

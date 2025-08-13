@@ -9,6 +9,7 @@ from sections import interviews
 from sections import roe
 from sections import glossary
 from sections import constants
+from sections.methods import *
 
 DEFAULT_FILE = "excel/example_app_tracker.xlsx"
 REAL_FILE = "excel/app_tracker.xlsx"
@@ -35,6 +36,9 @@ with header1:
     gradient = [color1, color2]
     barcolor = "turbo"
 
+# Checks whether the data is mine
+grahams = False
+
 # Check if file exists. Throws error if file is not present
 with header3:
 # User upload
@@ -52,15 +56,28 @@ with header3:
     )
     # Load data
     if uploaded_file is not None:
-        apps = pd.read_excel(uploaded_file, sheet_name="Tracker")
-        calc = pd.read_excel(uploaded_file, sheet_name="ROE Calculation")
-        interview = pd.read_excel(uploaded_file, sheet_name="Interviews")
         st.success("✅ Uploaded file.")
+        try:
+            apps = pd.read_excel(uploaded_file, sheet_name="Tracker")
+        except:
+            apps = pd.read_excel(DEFAULT_FILE, sheet_name="Tracker")
+            st.error("❌ Sheet called 'Tracker' not found. Default data is used.")
+        try:
+            calc = pd.read_excel(uploaded_file, sheet_name="ROE Calculation")
+        except:
+            calc = pd.read_excel(DEFAULT_FILE, sheet_name="ROE Calculation")
+            st.error("❌ Sheet called 'ROE Calculation' not found. Default data is used.")
+        try:
+            interview = pd.read_excel(uploaded_file, sheet_name="Interviews")
+        except:
+            interview = pd.read_excel(DEFAULT_FILE, sheet_name="Interviews")
+            st.error("❌ Sheet called 'ROE Calculation' not found. Default data is used.")
     elif os.path.exists(REAL_FILE):
         apps = pd.read_excel(REAL_FILE, sheet_name="Tracker")
         calc = pd.read_excel(REAL_FILE, sheet_name="ROE Calculation")
         interview = pd.read_excel(REAL_FILE, sheet_name="Interviews")
         st.info("ℹ️ Running app locally with app_tracker.xlsx.")
+        grahams = True
     else:
         apps = pd.read_excel(DEFAULT_FILE, sheet_name="Tracker")
         calc = pd.read_excel(DEFAULT_FILE, sheet_name="ROE Calculation")
@@ -83,17 +100,33 @@ page = st.sidebar.radio("Go to", pages)
 
 # ---- Page Routing ----
 if page == "Introduction":
+    st.title("Welcome!")
+    st.text("To compute the graphs in each section, specific Excel sheets and columns are necessary. If you are missing any columns or include any extra, those are registered below.")
+    missing_apps, extra_apps = validate_columns(apps, constants.APPS_COLUMNS)
+    missing_int, extra_int = validate_columns(interview, constants.INTERVIEW_COLUMNS)
+    missing_roe, extra_roe = validate_columns(calc, constants.ROE_COLUMNS)
+    missing, extra = st.columns(2, border=True, gap="medium")
+    with missing:
+        st.subheader("Missing columns from the current Excel document:")
+        st.text("Missing columns from the Tracker sheet: " + missing_apps)
+        st.text("Missing columns from the Interviews sheet: " + missing_int)
+        st.text("Missing columns from the ROE Calculation sheet: " + missing_roe)
+    with extra:
+        st.subheader("Extra columns from the current Excel document:")
+        st.text("Extra columns from the Tracker sheet: " + extra_apps)
+        st.text("Extra columns from the Interviews sheet: " + extra_int)
+        st.text("Extra columns from the ROE Calculation sheet: " + extra_roe)
     intro.show()
 
 elif page == "Application Data":
-    breakdown.show(apps)
+    breakdown.show(apps, grahams)
 
 elif page == "Interviews":
-    interviews.show(apps, interview)
+    interviews.show(apps, interview, grahams)
 
 elif page == "ROE":
     roe.show(apps, calc)
 
 elif page == "Glossary":
-    glossary.show()
+    glossary.show(grahams)
 

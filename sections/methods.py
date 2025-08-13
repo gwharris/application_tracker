@@ -122,3 +122,28 @@ def bar_text(chart, dy_val, quantity, prefix=None, datatype="N"):
     ).encode(
         text='label:' + datatype
     )
+
+# Made to print extra columns
+def validate_columns(df: pd.DataFrame, expected_cols: list):
+    """
+    Checks whether DataFrame has expected columns.
+
+    Parameters:
+        df (pd.DataFrame): The DataFrame to check.
+        expected_cols (list): The list of expected column names.
+
+    Returns:
+        The missing and extra columns, as comma-separated strings
+    """
+    actual_cols = list(df.columns)
+    expected_set = set(expected_cols)
+    actual_set = set(actual_cols)
+
+    missing = ', '.join(list(expected_set - actual_set))
+    extra = ', '.join(list(actual_set - expected_set))
+    if not missing:
+        missing = "None"
+    if not extra:
+        extra = "None"
+    
+    return missing, extra

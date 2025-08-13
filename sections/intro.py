@@ -1,7 +1,6 @@
 import streamlit as st
 
 def show():
-    st.write("Under construction.")
     st.subheader("Known Issues")
     st.write("""
         Color picker doesn't work correctly.\n

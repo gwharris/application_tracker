@@ -10,7 +10,7 @@ from sections.methods import *
 color1 = constants.COLOR1
 color2 = constants.COLOR2
 
-def show(apps):
+def show(apps, grahams):
     st.title("Application Data")
     try:
         # ----------------------------------------------- Constants
@@ -68,7 +68,8 @@ def show(apps):
             st.text("Applications grouped by INDUSTRY:")
             st.dataframe(industry_df, hide_index=True)
             st.text("'DTR' stands for 'Days to Respond' and measures how long it takes companies to send a response to an application.")
-            st.text("More details about responses are available in the Glossary.")
+            if grahams:
+                st.text("More details about responses are available in the Glossary.")
         with col2:
             st.text("Applications grouped by ROLE TYPE:")
             st.dataframe(role_df, hide_index=True)
@@ -82,7 +83,8 @@ def show(apps):
                 color=alt.value(color1)
             )
             st.altair_chart(platform, use_container_width=True)
-            st.text("In the master data, the industry 'Recruiter' represents listings posted by a recruiting agency on behalf of another company. The overwhelming majority of postings like these are from financial/investment banking firms. The response rate for these kinds of listings is abysmal.")
+            if grahams:
+                st.text("In the master data, the industry 'Recruiter' represents listings posted by a recruiting agency on behalf of another company. The overwhelming majority of postings like these are from financial/investment banking firms. The response rate for these kinds of listings is abysmal.")
         with col4:
             # Create the chart
             platform = alt.Chart(role_df).mark_bar().encode(
@@ -108,7 +110,8 @@ def show(apps):
         # Response data
         st.html("<hr>")
         st.subheader("Responses")
-        st.text("'Pending' applications are not considered in response metrics to keep data historical and not current.")
+        if grahams:
+            st.text("'Pending' applications are not considered in response metrics to keep data historical and not current.")
         matrix1, matrix2 = st.columns(2)
         with matrix1:
             all_response_rate = str('{0:.4g}'.format((response_number/total_apps)*100)) + "%"
@@ -224,7 +227,7 @@ def show(apps):
             with res1:
                 st.dataframe(resume_df, hide_index=True)
             with res2:
-                st.text("This section measures the effectiveness of tailoring resumes to each job application.")
+                st.text("This section measures the effectiveness of tailoring resumes.")
 
             # Cover Letter info
             st.html("<hr>")
@@ -234,16 +237,9 @@ def show(apps):
             with cov1:
                 st.dataframe(cover_df, hide_index=True)
             with cov2:
-                st.html(
-                    "Status Breakdown:"
-                    "<ul style='padding-left: 5%'>" \
-                    "<li>Yes = Cover letter was sent.</li>" \
-                    "<li>No = Cover letter was not sent.</li>" \
-                    "<li>Unavailable = There was no place to add a cover letter on the application.</li>" \
-                    "<li>Questionnaire = In leiu of a cover letter, there were short-answer response questions.</li>" \
-                    "</ul>"
-                )
+                st.text("This section measures the effectiveness of cover letters.")
+                st.text("Definitions for each of the cover letter types in the master data is provided in the Glossary.")
 
 
     except:
-        st.write("Something went wrong.")
+        st.write("Something went wrong, check to make sure all columns are labeled correctly.")

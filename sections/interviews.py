@@ -12,13 +12,12 @@ color2 = constants.COLOR2
 gradient = [color1, color2]
 barcolor = "turbo"
 
-def show(apps, interviews):
+def show(apps, interviews, grahams):
     st.title("Interview Data")
     try:
         # ----------------------------------------------- Constants
         # Interview metrics
         num_interviewed_at = sum(1 for app_stat in apps["Status"].dropna() if app_stat in constants.REAL_RESP)
-        currently_interviewing = sum(1 for app_stat in apps["Status"].dropna() if app_stat in ["Interviewing"])
         sum_interviews = interviews[interviews.columns[0]].dropna().count() # NOT sum of apps interview column cause duplicates
 
         num_weeks = apps["Week"].max() # Number of weeks for later calc
@@ -32,7 +31,6 @@ def show(apps, interviews):
         weekly_df = groupby_percents(apps, "Week")
         if weekly_df.iloc[len(weekly_df)-1][0] < 0: # Drop extra auto values if they exist
             weekly_df = weekly_df.drop(0) 
-        last_four_weeks = weekly_df['# of Applications'].head(4).sum()  
 
         # Multiple agg groupbys - can't use the function I made
         # Number of rounds
@@ -84,7 +82,7 @@ def show(apps, interviews):
             )
             st.altair_chart(chart, use_container_width=True)
             st.text("Note: This chart shows the number of interviews per week based on when the application was sent, not when the actual interview occured. This helps show how successful a resume is on any given week and how changes to a resume impact interviews.")
-            st.text("There's usually a 2-3 week lag time in getting interviews due to response time turnaround.")   
+            st.text("There's usually a 2-3 week lag time in getting interviews due to response time turnaround.") 
         with matrix6:
             st.subheader("Number of interviews, by round:")
             round_chart = alt.Chart(just_round_df).mark_bar().encode(
@@ -94,7 +92,7 @@ def show(apps, interviews):
                 color=alt.value(color2)
             )
             st.altair_chart(round_chart, use_container_width=True)
-            st.text("'Rounds' are defined by a separate, new, scheduled item. For example, going in-person to an interview for 3 back-to-back meetings is considered only one round, even if 3 meetings occured. If multiple interviews happen for the same round on different dates, they are considered the same round but separate interviews (ie: meeting with 3 people, but each interview is scheduled for a different day.)")
+            st.text("'Rounds' are defined by a progression in an interview process. For example, going in-person to an interview for 3 back-to-back meetings is considered only one round, even if 3 meetings occured. If multiple interviews happen for the same stage on different dates, they are considered the same round but separate interviews (ie: meeting with 3 people, but each interview is scheduled for a different day.)")
 
         # Metrics
         matrix7, matrix8 = st.columns(2, gap="medium")
@@ -199,4 +197,4 @@ def show(apps, interviews):
             st.altair_chart(chart, use_container_width=True)
 
     except:
-        st.write("Something went wrong.\nTwo sheets are required for interview metrics: 'Tracker' and 'Interviews'. Please make sure you have sheets with those names!")
+        st.write("Something went wrong, check to make sure all columns are labeled correctly.")
