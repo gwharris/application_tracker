@@ -35,38 +35,38 @@ def show(apps, interviews, grahams):
         # Multiple agg groupbys - can't use the function I made
         # Number of rounds
         int_round_df = interviews.groupby(['Round', 'Type of Interview', 'Location']).agg({
-                'State': 'count',
+                'Company': 'count',
                 'Performance': 'mean',
                 'Experience': 'mean'
             }).reset_index().sort_values("Round")
         just_round_df = interviews.groupby("Round").agg({
-                'State': 'count',
+                'Company': 'count',
                 'Performance': 'mean',
                 'Experience': 'mean'
             }).rename(columns={
-                'State': "Number of Interviews"
+                'Company': "Number of Interviews"
             }).reset_index().sort_values("Round")
         # Type of role
         int_role_df = interviews.groupby(['Role Type', 'Type of Interview', 'Location']).agg({
-                'State': 'count',
+                'Company': 'count',
                 'Round': 'mean',
                 'Performance': 'mean',
                 'Experience': 'mean'
-            }).reset_index().sort_values("State", ascending=False)
+            }).reset_index().sort_values("Company", ascending=False)
         just_role_df = interviews.groupby('Role Type').agg({
-                'State': 'count',
+                'Company': 'count',
                 'Round': 'mean',
                 'Performance': 'mean',
                 'Experience': 'mean'
-            }).reset_index().sort_values("State", ascending=False)
+            }).reset_index().sort_values("Company", ascending=False)
         # Location
         int_loc_df = interviews.groupby('Location').agg({
-                'State': 'count'
-            }).reset_index().sort_values("State", ascending=False)
+                'Company': 'count'
+            }).reset_index().sort_values("Company", ascending=False)
         # Type of interview
         int_type_df = interviews.groupby('Type of Interview').agg({
-                'State': 'count'
-            }).reset_index().sort_values("State", ascending=False)
+                'Company': 'count'
+            }).reset_index().sort_values("Company", ascending=False)
 
         # ----------------------------------------------- Calculations
         st.header("Interviews")
@@ -146,7 +146,7 @@ def show(apps, interviews, grahams):
             st.subheader("Grouped by NUMBER OF ROUNDS:")
             round = alt.Chart(int_round_df).mark_bar().encode(
                 x=alt.X("Round:O", title="Interview Round"),
-                y=alt.Y("State:Q", title="Count"),
+                y=alt.Y("Company:Q", title="Count"),
                 color=alt.Color(f'{color_field}:N', title=color_field, scale=alt.Scale(scheme=barcolor)),
             )
             st.altair_chart(round, use_container_width=True)
@@ -154,7 +154,7 @@ def show(apps, interviews, grahams):
             st.subheader("Grouped by ROLE TYPE:")
             role = alt.Chart(int_role_df).mark_bar().encode(
                 x=alt.X("Role Type:O", title="Role Type"),
-                y=alt.Y("State:Q", title="Count"),
+                y=alt.Y("Company:Q", title="Count"),
                 color=alt.Color(f'{color_field}:N', title=color_field, scale=alt.Scale(scheme=barcolor)),
             )
             st.altair_chart(role, use_container_width=True)
