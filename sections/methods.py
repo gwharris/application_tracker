@@ -6,29 +6,6 @@ import pandas as pd
 
 # ---------------------------------------- FUNCTIONS
 
-# Validates if the correc information is in the passed excel
-def validate_excel_headers(col_names, required_columns):
-    """
-    Validates headers in an Excel sheet.
-    
-    Returns:
-        dict: Keys are headers (required or extra),
-              Values are:
-                - True if required and present
-                - False if required and missing
-                - "extra" if present but not required
-    """
-    # 1. Validate required headers
-    header_status = {col: (col in col_names) for col in required_columns}
-    
-    # 2. Add extra headers
-    for col in col_names:
-        if col not in required_columns:
-            header_status[col] = "extra"
-    
-    return header_status
-
-
 # Takes the Excel structure and returns a formatted df
 def convert_to_st(df: pd.DataFrame, x: str, y: str):
     x_side = df[x].dropna().astype(int)

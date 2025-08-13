@@ -9,7 +9,7 @@ from sections import interviews
 from sections import roe
 from sections import glossary
 from sections import constants
-from sections.methods import *
+from sections import methods
 
 DEFAULT_FILE = "excel/example_app_tracker.xlsx"
 REAL_FILE = "excel/app_tracker.xlsx"
@@ -102,9 +102,9 @@ page = st.sidebar.radio("Go to", pages)
 if page == "Introduction":
     st.title("Welcome!")
     st.text("To compute the graphs in each section, specific Excel sheets and columns are necessary. If you are missing any columns or include any extra, those are registered below.")
-    missing_apps, extra_apps = validate_columns(apps, constants.APPS_COLUMNS)
-    missing_int, extra_int = validate_columns(interview, constants.INTERVIEW_COLUMNS)
-    missing_roe, extra_roe = validate_columns(calc, constants.ROE_COLUMNS)
+    missing_apps, extra_apps = methods.validate_columns(apps, constants.APPS_COLUMNS)
+    missing_int, extra_int = methods.validate_columns(interview, constants.INTERVIEW_COLUMNS)
+    missing_roe, extra_roe = methods.validate_columns(calc, constants.ROE_COLUMNS)
     missing, extra = st.columns(2, border=True, gap="medium")
     with missing:
         st.subheader("Missing columns from the current Excel document:")
