@@ -9,7 +9,6 @@ from sections import interviews
 from sections import roe
 from sections import glossary
 from sections import constants
-from sections import methods
 
 DEFAULT_FILE = "excel/example_app_tracker.xlsx"
 REAL_FILE = "excel/app_tracker.xlsx"

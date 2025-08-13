@@ -41,10 +41,11 @@ ROE_COLUMNS = [
     "ROE"
 ]
 
-ALL_RESP = ['Rejected', 'Bailed', 'Interviewing', 'Ghosted', 
-            'On Hold', 'Denied', 'Viewed', 'Offer', 'No Offer'] # Denied and Viewed are auto responses
+ALL_RESP = ['Rejected', 'Bailed', 'Interviewing', 'Ghosted', "Selected Out", 
+            'On Hold', 'Denied', 'Viewed', 'Offer', 'No Offer', "Closed"] # Denied, Closed, Viewed are auto responses
 
-REAL_RESP = ['Rejected', 'Bailed', 'Interviewing', 'Ghosted', 'On Hold', 'Offer', 'No Offer'] # So real != Denied, Viewed
+REAL_RESP = ['Rejected', 'Bailed', 'Interviewing', 'Ghosted', 'On Hold', 'Offer', 'No Offer', "Selected Out"] 
+# So real != Denied, Viewed Closed
 
 COLOR1 = "#26bce1"
 COLOR2 = "#4a58dd"
