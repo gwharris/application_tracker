@@ -216,7 +216,7 @@ def show(apps, grahams):
                     st.text("Error dropping null value months.")
                 st.text("Note: 'DTR' stands for 'Days to Respond'.")
             with mon2:
-                st.text("How has my process changed over time?")
+                st.text("This section tracks seasonality of the data, ie: if some months are better or worse for applying. It also tracks how the application process has changed each month.")
                 st.text("Usually there's a 2-3 week lag in responses from companies, so data becomes more accurate as revisions come in.")
 
             # Cover Letter info

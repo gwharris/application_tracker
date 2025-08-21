@@ -24,7 +24,7 @@ def show(grahams):
                 "</ul>"\
                 "List of Invalid Responses"\
                 "<ul style='padding-left: 5%'>" \
-                    "<li>Closed - The platform I applied on sent a notification that the role is no longer accepting applicants, which likely means they started the process and I was not chosen.</li>" \
+                    "<li>Closed - The platform I applied on sent a notification that the role is no longer accepting applicants, which likely means they started the process and I was not chosen. LinkedIn and Wellfound send these notifications.</li>" \
                     "<li>Denied - I received an automated denial.</li>" \
                     "<li>Viewed - I received a notification that my application was viewed by a platform but the company did not connect with me (ie. LinkedIn sent a message that my application was seen but the company did not send any communication).</li>" \
                 "</ul>"\
