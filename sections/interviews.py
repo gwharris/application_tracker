@@ -9,8 +9,8 @@ from sections.methods import *
 # Color constants
 color1 = constants.COLOR1
 color2 = constants.COLOR2
-gradient = [color1, color2]
-barcolor = "turbo"
+heatmap_gradient = ["#FFFFFF", color2]
+interview_barcolor = "turbo"
 
 def show(apps, interviews, grahams):
     st.title("Interview Data")
@@ -69,7 +69,11 @@ def show(apps, interviews, grahams):
             }).reset_index().sort_values("Company", ascending=False)
 
         # ----------------------------------------------- Calculations
+        st.text("Note: The total interviews metric may not line up with the number of interviews reported in the 'Applications' spreadsheet. This is because interviews may be tagged to more than one role. For example, a company may use a first-round phone call to consider an applicant for two or more roles.")
+        st.text("Ex: Company A is hiring 2 new Product Managers. To streamline the process, candidates who do a first-round interview are considered for both positions. This is considered one interview on the Interviews sheet but two interviews on the Applications sheet.")
+
         st.header("Interviews")
+
         # Interview charts
         matrix5, matrix6 = st.columns(2, border=True, gap="medium")
         with matrix5:
@@ -102,7 +106,6 @@ def show(apps, interviews, grahams):
             st.metric("Average number of interviews per week:", '{0:.3g}'.format(sum_interviews/num_weeks))
         with matrix8: 
             st.metric("Total interviews:", int(sum_interviews))
-            st.text("Note: The total interviews metric may not line up with the number of interviews reported in the 'Applications' spreadsheet. This is because interviews may be tagged to more than one role. For example, a company may use a first-round phone call to consider an applicant for two or more roles.")
             st.metric("Longest interview process:", '{0:.2g}'.format(interview_max) + " interviews (" + interview_max_company + ")")
 
         st.html("<hr>")
@@ -111,27 +114,45 @@ def show(apps, interviews, grahams):
         st.subheader("Heatmap of interviews:")
         cal1, cal2, cal3 = st.columns([1,4,1])
         with cal2:
+            # Step 1: Parse dates
             interviews['Date'] = pd.to_datetime(interviews['Date'], format='%d-%b-%Y')
-            # Step 2: Count occurrences per day
+
+            # Step 2: Create a full date range from min to max
+            full_range = pd.date_range(interviews['Date'].min(), interviews['Date'].max(), freq="D")
+
+            # Step 3: Count actual interview days
             daily_counts = interviews['Date'].value_counts().reset_index()
             daily_counts.columns = ['date', 'count']
-            daily_counts = daily_counts.sort_values('date')
-            # Step 3: Add calendar fields
+
+            # Step 4: Reindex with full date range, fill missing with 0
+            daily_counts = (
+                daily_counts.set_index('date')
+                .reindex(full_range, fill_value=0)
+                .rename_axis('date')
+                .reset_index()
+            )
+
+            # Step 5: Add calendar fields
             daily_counts['day'] = daily_counts['date'].dt.dayofweek     # 0 = Monday
             daily_counts['week'] = daily_counts['date'].dt.isocalendar().week
             daily_counts['month'] = daily_counts['date'].dt.strftime('%B')
-            # Step 4: Plot calendar-style heatmap
+
+            # Step 6: Plot heatmap
             heatmap = alt.Chart(daily_counts).mark_rect().encode(
                 x=alt.X('week:O', title='Week Number'),
-                y=alt.Y('day:O', title='Day of Week',
+                y=alt.Y(
+                    'day:O',
+                    title='Day of Week',
                     sort=[0, 1, 2, 3, 4, 5, 6],
                     axis=alt.Axis(
-                    labels=True,
-                    labelExpr="['Mon','Tue','Wed','Thu','Fri','Sat','Sun'][datum.value]"
-                )),
-                    color=alt.Color('count:Q', scale=alt.Scale(range=gradient), title='Frequency'),
-                    tooltip=['date:T', 'count:Q']
-                )
+                        labels=True,
+                        labelExpr="['Mon','Tue','Wed','Thu','Fri','Sat','Sun'][datum.value]"
+                    )
+                ),
+                color=alt.Color('count:Q', scale=alt.Scale(range=heatmap_gradient), title='Frequency'),
+                tooltip=['date:T', 'count:Q']
+            )
+
             st.altair_chart(heatmap, use_container_width=True)
         st.html("<hr>")
 
@@ -147,7 +168,7 @@ def show(apps, interviews, grahams):
             round = alt.Chart(int_round_df).mark_bar().encode(
                 x=alt.X("Round:O", title="Interview Round"),
                 y=alt.Y("Company:Q", title="Count"),
-                color=alt.Color(f'{color_field}:N', title=color_field, scale=alt.Scale(scheme=barcolor)),
+                color=alt.Color(f'{color_field}:N', title=color_field, scale=alt.Scale(scheme=interview_barcolor)),
             )
             st.altair_chart(round, use_container_width=True)
         with r2:
@@ -155,7 +176,7 @@ def show(apps, interviews, grahams):
             role = alt.Chart(int_role_df).mark_bar().encode(
                 x=alt.X("Role Type:O", title="Role Type"),
                 y=alt.Y("Company:Q", title="Count"),
-                color=alt.Color(f'{color_field}:N', title=color_field, scale=alt.Scale(scheme=barcolor)),
+                color=alt.Color(f'{color_field}:N', title=color_field, scale=alt.Scale(scheme=interview_barcolor)),
             )
             st.altair_chart(role, use_container_width=True)
 

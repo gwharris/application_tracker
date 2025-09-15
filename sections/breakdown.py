@@ -84,7 +84,7 @@ def show(apps, grahams):
             )
             st.altair_chart(platform, use_container_width=True)
             if grahams:
-                st.text("In the master data, the industry 'Recruiter' represents listings posted by a recruiting agency on behalf of another company. The overwhelming majority of postings like these are from financial/investment banking firms. The response rate for these kinds of listings is abysmal.")
+                st.text("In the master data, the industry 'Recruiter' represents listings posted by a recruiting agency on behalf of another company. The overwhelming majority of postings like these are from financial/investment banking firms, with some from healthcare and AI industries.")
         with col4:
             # Create the chart
             platform = alt.Chart(role_df).mark_bar().encode(
