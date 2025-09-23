@@ -35,6 +35,8 @@ def groupby_percents(sheet, col_name):
         Interviews=('Number of Interviews', 'sum'),
         Salary_Min=('Salary Min', 'mean'),
         Salary_Max=('Salary Max', 'mean'),
+        Salary_Min_Var=('Salary Min', 'std'),
+        Salary_Max_Var=('Salary Max', 'std'),
         All_Positive=('Status', count_status(constants.ALL_RESP)),
         Real_Positive=('Status', count_status(constants.REAL_RESP)),
         Response_Time=('Response Time (Days)', 'mean')
@@ -47,8 +49,10 @@ def groupby_percents(sheet, col_name):
     return_df['Real Responses'] = return_df['Real Responses'].apply('{:.1f}%'.format)
 
     # Calculate salary and response columns
-    return_df['Salary_Min'] = return_df['Salary_Min'].apply('${:.2f}'.format)
-    return_df['Salary_Max'] = return_df['Salary_Max'].apply('${:.2f}'.format)
+    return_df['Salary_Min'] = (return_df['Salary_Min'] * 1000).apply('${:,.0f}'.format)
+    return_df['Salary_Max'] = (return_df['Salary_Max'] * 1000).apply('${:,.0f}'.format)
+    return_df['Salary_Min_Var'] = (return_df['Salary_Min_Var'] * 1000).apply('${:,.0f}'.format)
+    return_df['Salary_Max_Var'] = (return_df['Salary_Max_Var'] * 1000).apply('${:,.0f}'.format)
     return_df['Response_Time'] = return_df['Response_Time'].apply('{:.2f}'.format)
 
     # Drop calculation columns
@@ -60,6 +64,8 @@ def groupby_percents(sheet, col_name):
         'Companies': '# of Companies',
         'Salary_Min': 'Avg Min K',
         'Salary_Max': 'Avg Max K',
+        'Salary_Min_Var': 'Min STD',
+        'Salary_Max_Var': 'Max STD',
         'Response_Time': 'Avg DTR'
     })
 
