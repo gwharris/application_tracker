@@ -21,7 +21,7 @@ def count_status(status_list):
     return lambda x: x.isin(status_list).sum()
 
 # Returns a df in the right formatting
-def groupby_percents(sheet, col_name):
+def groupby_percents(sheet, col_name, inc_std=True):
     """
     Formats the dataframes into groupable insights.
 
@@ -68,6 +68,9 @@ def groupby_percents(sheet, col_name):
         'Salary_Max_Var': 'Max STD',
         'Response_Time': 'Avg DTR'
     })
+
+    if not inc_std:
+        return_df = return_df.drop(['Min STD', 'Max STD', 'Avg Min K', 'Avg Max K'], axis=1)
 
     return return_df
 

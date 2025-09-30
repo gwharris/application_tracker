@@ -39,8 +39,7 @@ def show(apps, grahams):
         # ----------------------------------------------- Dataframes
         industry_df = groupby_percents(apps, "Industry")
         role_df = groupby_percents(apps, "Role Type")
-        comp_size_df = groupby_percents(apps, "Company Size")
-        comp_size_df = comp_size_df.drop(["Avg Min K", "Avg Max K"], axis=1)
+        comp_size_df = groupby_percents(apps, "Company Size", False)
         platform_df = groupby_percents(apps, "Platform")
 
         weekly_df = groupby_percents(apps, "Week")
@@ -48,16 +47,13 @@ def show(apps, grahams):
             weekly_df = weekly_df.drop(0) 
         last_four_weeks = weekly_df['# of Applications'].head(4).sum()
 
-        resume_df = groupby_percents(apps, "Resume ID")
+        resume_df = groupby_percents(apps, "Resume ID", False)
         resume_df = resume_df.sort_values("# of Applications", ascending=False)
-        resume_df = resume_df.drop(["Avg Min K", "Avg Max K"], axis=1)
 
-        cover_df = groupby_percents(apps, "Cover Letter")
+        cover_df = groupby_percents(apps, "Cover Letter", False)
         cover_df = cover_df.sort_values("# of Applications", ascending=False)
-        cover_df = cover_df.drop(["Avg Min K", "Avg Max K"], axis=1)
 
-        month_df = groupby_percents(apps, "Month").sort_values("Month")
-        month_df = month_df.drop(["Avg Min K", "Avg Max K"], axis=1)
+        month_df = groupby_percents(apps, "Month", False).sort_values("Month")
 
         # ----------------------------------------------- Calculations
         st.header("Job Details")
